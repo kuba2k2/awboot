@@ -6,13 +6,15 @@
 #include "sunxi_usart.h"
 #include "sunxi_sdhci.h"
 
+#define SOC "v851s"
+
 #define USART_DBG usart_dbg
 
 #define CONFIG_BOOT_SPINAND
-//#define CONFIG_BOOT_SDCARD
-//#define CONFIG_BOOT_MMC
+// #define CONFIG_BOOT_SDCARD
+// #define CONFIG_BOOT_MMC
 
-//#define CONFIG_ENABLE_CONSOLE
+// #define CONFIG_ENABLE_CONSOLE
 
 #define CONFIG_FATFS_CACHE_SIZE		 (CONFIG_DTB_LOAD_ADDR - SDRAM_BASE) // in bytes
 #define CONFIG_SDMMC_SPEED_TEST_SIZE 1024 // (unit: 512B sectors)
@@ -25,8 +27,8 @@
 #define CONFIG_DTB_FILENAME	   "sun8i-v851s-lizard.dtb"
 
 /* boot from MMC/SD */
-//#define CONFIG_CMD_LINE_ARGS	"mem=64M cma=8M root=/dev/mmcblk0p2 init=/sbin/init console=ttyS2,115200
-//earlyprintk=sunxi-uart,0x02500800 rootwait"
+// #define CONFIG_CMD_LINE_ARGS	"mem=64M cma=8M root=/dev/mmcblk0p2 init=/sbin/init console=ttyS2,115200
+// earlyprintk=sunxi-uart,0x02500800 rootwait"
 /* boot from spi nand UBIFS */
 #define CONFIG_CMD_LINE_ARGS \
 	"mem=64M cma=8M init=/sbin/init console=ttyS2,115200 rootfstype=ubifs ubi.mtd=3 root=ubi0:rootfs rw rootwait"

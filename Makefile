@@ -1,18 +1,17 @@
 # Target
-TARGET := awboot
 CROSS_COMPILE ?= arm-none-eabi
 
 # Log level defaults to info
 LOG_LEVEL ?= 30
+BOARD ?= mangopi-dual
+SOC := $(shell grep "#define SOC" boards/$(BOARD)/board.h | cut -d \" -f2)
+TARGET := awboot-$(BOARD)
 
-BOARD ?= $(error Please set BOARD variable)
-SOC ?= $(error Please set SOC variable: t113-s3, t113-s4, v851s)
+SRCS := main.c boards/$(BOARD)/board.c
 
-SRCS := main.c boards/board-$(BOARD).c
-
-INCLUDE_DIRS :=-I . -I lib -I boards
+INCLUDE_DIRS := -I . -I lib -I boards/$(BOARD)
 LIBS := -lgcc -nostdlib
-DEFINES := -DLOG_LEVEL=$(LOG_LEVEL) -DBUILD_REVISION=$(shell cat .build_revision)
+DEFINES := -DLOG_LEVEL=$(LOG_LEVEL) -DBOARD=$(BOARD) -DBUILD_REVISION=$(shell cat .build_revision)
 
 include	arch/arm32/arm32.mk
 include	lib/lib.mk
@@ -38,11 +37,10 @@ MAKE=make
 
 # Objects
 EXT_OBJS =
-OBJ_DIR = build
+OBJ_DIR = build-$(BOARD)
 BUILD_OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 BUILD_OBJSA = $(ASRCS:%.S=$(OBJ_DIR)/%.o)
 OBJS = $(BUILD_OBJSA) $(BUILD_OBJS) $(EXT_OBJS)
-
 
 all: git begin build mkboot
 
@@ -54,28 +52,25 @@ begin:
 build_revision:
 	@expr `cat .build_revision` + 1 > .build_revision
 
-link_board:
-	@/bin/ln -fs board-$(BOARD).h boards/board.h
-
 .PHONY: tools boot.img
 .SILENT:
 
 git:
 	cp -f tools/hooks/* .git/hooks/
 
-build: build_revision link_board $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
+build: build_revision $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
 
 .SECONDARY : $(TARGET)
 .PRECIOUS : $(OBJS)
 $(OBJ_DIR)/$(TARGET)-fel.elf: $(OBJS)
 	echo "  LD    $@"
-	$(CC) -E -P -x c -D__RAM_BASE=0x00030000 ./arch/arm32/sunxi/$(SOC)/link.ld > build/link-fel.ld
-	$(CC) $^ -o $@ $(LIB_DIR) -T build/link-fel.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-fel.map
+	$(CC) -E -P -x c -D__RAM_BASE=0x00030000 ./arch/arm32/sunxi/$(SOC)/link.ld > $(OBJ_DIR)/link-fel.ld
+	$(CC) $^ -o $@ $(LIB_DIR) -T $(OBJ_DIR)/link-fel.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-fel.map
 
 $(OBJ_DIR)/$(TARGET)-boot.elf: $(OBJS)
 	echo "  LD    $@"
-	$(CC) -E -P -x c -D__RAM_BASE=0x00020000 ./arch/arm32/sunxi/$(SOC)/link.ld > build/link-boot.ld
-	$(CC) $^ -o $@ $(LIB_DIR) -T build/link-boot.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-boot.map
+	$(CC) -E -P -x c -D__RAM_BASE=0x00020000 ./arch/arm32/sunxi/$(SOC)/link.ld > $(OBJ_DIR)/link-boot.ld
+	$(CC) $^ -o $@ $(LIB_DIR) -T $(OBJ_DIR)/link-boot.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-boot.map
 
 $(OBJ_DIR)/$(TARGET)-fel.bin: $(OBJ_DIR)/$(TARGET)-fel.elf
 	@echo OBJCOPY $@

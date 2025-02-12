@@ -6,13 +6,15 @@
 #include "sunxi_usart.h"
 #include "sunxi_sdhci.h"
 
+#define SOC "t113-s3"
+
 #define USART_DBG usart5_dbg
 
-//#define CONFIG_BOOT_SPINAND
+// #define CONFIG_BOOT_SPINAND
 #define CONFIG_BOOT_SDCARD
 #define CONFIG_BOOT_MMC
 
-//#define CONFIG_ENABLE_CONSOLE
+// #define CONFIG_ENABLE_CONSOLE
 
 #define CONFIG_FATFS_CACHE_SIZE		 (CONFIG_DTB_LOAD_ADDR - SDRAM_BASE) // in bytes
 #define CONFIG_SDMMC_SPEED_TEST_SIZE 1024 // (unit: 512B sectors)

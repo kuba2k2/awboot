@@ -1,5 +1,5 @@
 #include "main.h"
-#include "board-yuzuki-lizard.h"
+#include "board.h"
 #include "sunxi_gpio.h"
 #include "sunxi_sdhci.h"
 #include "sunxi_usart.h"
