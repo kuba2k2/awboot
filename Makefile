@@ -29,7 +29,18 @@ OBJCOPY=$(CROSS_COMPILE)-objcopy
 HOSTCC=gcc
 HOSTSTRIP=strip
 
+DATE=/bin/date
+CAT=/bin/cat
+ECHO=/bin/echo
+WORKDIR=$(/bin/pwd)
 MAKE=make
+
+# Objects
+EXT_OBJS =
+OBJ_DIR = build
+BUILD_OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
+BUILD_OBJSA = $(ASRCS:%.S=$(OBJ_DIR)/%.o)
+OBJS = $(BUILD_OBJSA) $(BUILD_OBJS) $(EXT_OBJS)
 
 DTB ?= sun8i-t113-mangopi-dual.dtb
 KERNEL ?= zImage
@@ -50,73 +61,45 @@ build_revision:
 git:
 	cp -f tools/hooks/* .git/hooks/
 
-build:: build_revision
+build: build_revision $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
 
-# $(1): varient name
-# $(2): values to remove from board.h
-define VARIENT =
+.SECONDARY : $(TARGET)
+.PRECIOUS : $(OBJS)
+$(OBJ_DIR)/$(TARGET)-fel.elf: $(OBJS)
+	echo "  LD    $@"
+	$(CC) -E -P -x c -D__RAM_BASE=0x00030000 ./arch/arm32/mach-t113s3/link.ld > build/link-fel.ld
+	$(CC) $^ -o $@ $(LIB_DIR) -T build/link-fel.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-fel.map
 
-# Objects
-$(1)_OBJ_DIR = build-$(1)
-$(1)_BUILD_OBJS = $$(SRCS:%.c=$$($(1)_OBJ_DIR)/%.o)
-$(1)_BUILD_OBJSA = $$(ASRCS:%.S=$$($(1)_OBJ_DIR)/%.o)
-$(1)_OBJS = $$($(1)_BUILD_OBJSA) $$($(1)_BUILD_OBJS)
+$(OBJ_DIR)/$(TARGET)-boot.elf: $(OBJS)
+	echo "  LD    $@"
+	$(CC) -E -P -x c -D__RAM_BASE=0x00020000 ./arch/arm32/mach-t113s3/link.ld > build/link-boot.ld
+	$(CC) $^ -o $@ $(LIB_DIR) -T build/link-boot.ld $(LDFLAGS) -Wl,-Map,$(OBJ_DIR)/$(TARGET)-boot.map
 
-build:: $$($(1)_OBJ_DIR)/$$(TARGET)-boot.elf $$($(1)_OBJ_DIR)/$$(TARGET)-boot.bin $$($(1)_OBJ_DIR)/$$(TARGET)-fel.elf $$($(1)_OBJ_DIR)/$$(TARGET)-fel.bin
+$(OBJ_DIR)/$(TARGET)-fel.bin: $(OBJ_DIR)/$(TARGET)-fel.elf
+	@echo OBJCOPY $@
+	$(OBJCOPY) -O binary $< $@
+	$(SIZE) $<
 
-.PRECIOUS : $$($(1)_OBJS)
-$$($(1)_OBJ_DIR)/$$(TARGET)-fel.elf: $$($(1)_OBJS)
-	echo "  LD    $$@"
-	$$(CC) -E -P -x c -D__RAM_BASE=0x00030000 ./arch/arm32/mach-t113s3/link.ld > $$($(1)_OBJ_DIR)/link-fel.ld
-	$$(CC) $$^ -o $$@ -T $$($(1)_OBJ_DIR)/link-fel.ld $$(LDFLAGS) -Wl,-Map,$$($(1)_OBJ_DIR)/$$(TARGET)-fel.map
+$(OBJ_DIR)/$(TARGET)-boot.bin: $(OBJ_DIR)/$(TARGET)-boot.elf
+	@echo OBJCOPY $@
+	$(OBJCOPY) -O binary $< $@
+	$(SIZE) $<
 
-$$($(1)_OBJ_DIR)/$$(TARGET)-boot.elf: $$($(1)_OBJS)
-	echo "  LD    $$@"
-	$$(CC) -E -P -x c -D__RAM_BASE=0x00020000 ./arch/arm32/mach-t113s3/link.ld > $$($(1)_OBJ_DIR)/link-boot.ld
-	$$(CC) $$^ -o $$@ -T $$($(1)_OBJ_DIR)/link-boot.ld $$(LDFLAGS) -Wl,-Map,$$($(1)_OBJ_DIR)/$$(TARGET)-boot.map
+$(OBJ_DIR)/%.o : %.c
+	echo "  CC    $@"
+	mkdir -p $(@D)
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-$$($(1)_OBJ_DIR)/$$(TARGET)-fel.bin: $$($(1)_OBJ_DIR)/$$(TARGET)-fel.elf
-	@echo OBJCOPY $$@
-	$$(OBJCOPY) -O binary $$< $$@
+$(OBJ_DIR)/%.o : %.S
+	echo "  CC    $@"
+	mkdir -p $(@D)
+	$(CC) $(ASFLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
-$$($(1)_OBJ_DIR)/$$(TARGET)-boot.bin: $$($(1)_OBJ_DIR)/$$(TARGET)-boot.elf
-	@echo OBJCOPY $$@
-	$$(OBJCOPY) -O binary $$< $$@
+-include $(patsubst %.o,%.d,$(OBJS))
 
-$$($(1)_OBJ_DIR)/%.o : %.c
-	echo "  CC    $$@"
-	mkdir -p $$(@D)
-	$$(CC) $$(CFLAGS) -include $$($(1)_OBJ_DIR)/board.h $$(INCLUDE_DIRS) -c $$< -o $$@
-
-$$($(1)_OBJ_DIR)/%.o : %.S
-	echo "  CC    $$@"
-	mkdir -p $$(@D)
-	$$(CC) $$(ASFLAGS) $$(INCLUDE_DIRS) -c $$< -o $$@
-
-$$($(1)_OBJS): $$($(1)_OBJ_DIR)/board.h
-
-$$($(1)_OBJ_DIR)/board.h: board.h
-	echo "  GEN   $$@"
-	mkdir -p $$(@D)
-	grep -v "$(2)" >$$@ <$$<
-
-clean::
-	rm -rf $$($(1)_OBJ_DIR)
-
--include $$(patsubst %.o,%.d,$$($(1)_OBJS))
-
-endef
-
-# build spi-only image without sd/mmc
-$(eval $(call VARIENT,spi,CONFIG_BOOT_SDCARD\|CONFIG_BOOT_MMC))
-
-# build sd/mmc only image without spi
-$(eval $(call VARIENT,sdmmc,CONFIG_BOOT_SPINAND))
-
-# build image with everything
-$(eval $(call VARIENT,all,XXXXXXXXX))
-
-clean::
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f $(TARGET)
 	rm -f $(TARGET)-*.bin
 	rm -f $(TARGET)-*.map
 	rm -f *.img
@@ -130,24 +113,15 @@ tools:
 	$(MAKE) -C tools all
 
 mkboot: build tools
-	echo "SPI:"
-	$(SIZE) build-spi/$(TARGET)-boot.elf
-	cp -f build-spi/$(TARGET)-boot.bin $(TARGET)-boot-spi.bin
-	cp -f build-spi/$(TARGET)-boot.bin $(TARGET)-boot-spi-4k.bin
+	cp $(OBJ_DIR)/$(TARGET)-fel.bin $(TARGET)-fel.bin
+	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot.bin
+	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-spi.bin
+	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-spi-4k.bin
+	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-sd.bin
+	tools/mksunxi $(TARGET)-fel.bin 8192
 	tools/mksunxi $(TARGET)-boot-spi.bin 8192
 	tools/mksunxi $(TARGET)-boot-spi-4k.bin 8192 4096
-
-	echo "SDMMC:"
-	$(SIZE) build-sdmmc/$(TARGET)-boot.elf
-	cp -f build-sdmmc/$(TARGET)-boot.bin $(TARGET)-boot-sd.bin
 	tools/mksunxi $(TARGET)-boot-sd.bin 512
-
-	echo "ALL:"
-	$(SIZE) build-all/$(TARGET)-boot.elf
-	cp -f build-all/$(TARGET)-boot.bin $(TARGET)-boot-all.bin
-	cp -f build-all/$(TARGET)-boot.bin $(TARGET)-fel.bin
-	tools/mksunxi $(TARGET)-fel.bin 8192
-	tools/mksunxi $(TARGET)-boot-all.bin 8192
 
 spi-boot.img: mkboot
 	rm -f spi-boot.img

@@ -6,7 +6,7 @@
 *.map
 *.lfs
 
-build-*/*
+build/*
 
 tools/mksunxi
 
