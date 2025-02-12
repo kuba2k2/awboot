@@ -18,6 +18,12 @@ typedef struct {
 } __attribute__((packed)) spi_nand_id_t;
 
 typedef struct {
+	uint8_t	 mfr;
+	uint16_t dev;
+	uint8_t	 dlen;
+} __attribute__((packed)) spi_nor_id_t;
+
+typedef struct {
 	char		 *name;
 	spi_nand_id_t id;
 	uint32_t	  page_size;
@@ -28,6 +34,14 @@ typedef struct {
 	uint32_t	  ndies;
 	spi_io_mode_t mode;
 } spi_nand_info_t;
+
+typedef struct {
+	char		 *name;
+	spi_nor_id_t  id;
+	uint32_t	  block_size;
+	uint32_t	  blocks_per_die;
+	spi_io_mode_t mode;
+} spi_nor_info_t;
 
 typedef struct {
 	uint32_t   base;
@@ -48,5 +62,7 @@ int		 sunxi_spi_init(sunxi_spi_t *spi);
 void	 sunxi_spi_disable(sunxi_spi_t *spi);
 int		 spi_nand_detect(sunxi_spi_t *spi);
 uint32_t spi_nand_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen);
+int		 spi_nor_detect(sunxi_spi_t *spi);
+uint32_t spi_nor_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen);
 
 #endif

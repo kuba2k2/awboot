@@ -68,6 +68,20 @@ enum {
 	OPCODE_RESET			 = 0xff,
 };
 
+enum {
+	OPCODE_NOR_READ_ID			 = 0x9f,
+	OPCODE_NOR_READ_SR1			 = 0x05,
+	OPCODE_NOR_WRITE_SR1		 = 0x01,
+	OPCODE_NOR_READ				 = 0x03,
+	OPCODE_NOR_FAST_READ		 = 0x0b,
+	OPCODE_NOR_FAST_READ_DUAL_O	 = 0x3b,
+	OPCODE_NOR_FAST_READ_QUAD_O	 = 0x6b,
+	OPCODE_NOR_FAST_READ_DUAL_IO = 0xbb,
+	OPCODE_NOR_FAST_READ_QUAD_IO = 0xeb,
+	OPCODE_NOR_ENABLE_RESET		 = 0x66,
+	OPCODE_NOR_RESET_DEVICE		 = 0x99,
+};
+
 /* Micron calls it "feature", Winbond "status".
    We'll call it config for simplicity. */
 enum {
@@ -196,6 +210,11 @@ static const spi_nand_info_t spi_nand_infos[] = {
 
  /* FORESEE */
 	{	 "FS35SQA001G",	{.mfr = SPI_NAND_MFR_FORESEE, .dev = 0x7171, 2}, 2048,  64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
+};
+
+static const spi_nor_info_t spi_nor_infos[] = {
+	/* Winbond */
+	{"W25Q128JV", {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0x4018, 2}, 4096, 4096, SPI_IO_DUAL_RX},
 };
 
 sunxi_spi_t		*spip;
@@ -765,5 +784,154 @@ uint32_t spi_nand_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t r
 
 		spi_transfer(spi, spi->info.mode, tx, txlen, buf, rxlen);
 	}
+	return len;
+}
+
+/*
+ * SPI NOR functions
+ */
+
+static int spi_nor_info(sunxi_spi_t *spi)
+{
+	spi_nor_info_t *info;
+	spi_nor_id_t	id;
+	uint8_t			tx[1];
+	uint8_t			rx[4], *rxp;
+	int				i, r;
+
+	tx[0] = OPCODE_NOR_READ_ID;
+	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, rx, 4);
+	if (r < 0)
+		return r;
+
+	if (rx[0] == 0xff) {
+		rxp = rx + 1; // Dummy data, shift by one byte
+	} else {
+		rxp = rx;
+	}
+
+	id.mfr = rxp[0];
+	for (i = 0; i < ARRAY_SIZE(spi_nor_infos); i++) {
+		info = (spi_nor_info_t *)&spi_nor_infos[i];
+		if (info->id.dlen == 2) {
+			id.dev = (((uint16_t)rxp[1]) << 8 | rxp[2]);
+		} else {
+			id.dev = rxp[1];
+		}
+		if (info->id.mfr == id.mfr && info->id.dev == id.dev) {
+			memcpy((void *)&spi->info, info, sizeof(spi_nor_info_t));
+			return 0;
+		}
+	}
+
+	error("SPI-NOR: unknown ID '%02x %02x %02x %02x'\r\n", rx[0], rx[1], rx[2], rx[3]);
+
+	return -1;
+}
+
+static int spi_nor_reset(sunxi_spi_t *spi)
+{
+	uint8_t tx[1];
+	int		r;
+
+	tx[0] = OPCODE_NOR_ENABLE_RESET;
+	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, 0, 0);
+	if (r < 0)
+		return -1;
+
+	udelay(100 * 1000);
+
+	tx[0] = OPCODE_NOR_RESET_DEVICE;
+	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, 0, 0);
+	if (r < 0)
+		return -1;
+
+	udelay(100 * 1000);
+
+	return 0;
+}
+
+static void spi_nor_wait_while_busy(sunxi_spi_t *spi)
+{
+	uint8_t tx[1];
+	uint8_t rx[1];
+	int		r;
+
+	tx[0] = OPCODE_NOR_READ_SR1; // SR1
+	rx[0] = 0x00;
+
+	do {
+		r = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, rx, 1);
+		if (r < 0)
+			break;
+	} while ((rx[0] & 0x1) == 0x1); // SR1 Busy bit
+}
+
+int spi_nor_detect(sunxi_spi_t *spi)
+{
+	spi_nor_reset(spi);
+	spi_nor_wait_while_busy(spi);
+
+	if (spi_nor_info(spi) == 0) {
+		info("SPI-NOR: %s detected\r\n", spi->info.name);
+
+		return 0;
+	}
+
+	error("SPI-NOR: flash not found\r\n");
+	return -1;
+}
+
+uint32_t spi_nor_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen)
+{
+	uint32_t address = addr;
+	uint32_t len	 = 0;
+	uint32_t ca;
+	uint32_t txlen = 4;
+	uint8_t	 tx[6];
+
+	int read_opcode = OPCODE_READ;
+	switch (spi->info.mode) {
+		case SPI_IO_SINGLE:
+			read_opcode = OPCODE_READ;
+			break;
+		case SPI_IO_DUAL_RX:
+			read_opcode = OPCODE_FAST_READ_DUAL_O;
+			break;
+		case SPI_IO_QUAD_RX:
+			read_opcode = OPCODE_FAST_READ_QUAD_O;
+			break;
+		case SPI_IO_QUAD_IO:
+			read_opcode = OPCODE_FAST_READ_QUAD_IO;
+			txlen		= 5; // Quad IO has 2 dummy bytes
+			break;
+
+		default:
+			error("spi_nor: invalid mode\r\n");
+			return -1;
+	};
+
+	// With Winbond, we use continuous mode which has 1 more dummy
+	// This allows us to not load each page
+	if (spi->info.id.mfr == SPI_NAND_MFR_WINBOND) {
+		txlen++;
+	}
+
+	/* if (addr % spi->info.block_size) {
+		error("spi_nor: address is not page-aligned\r\n");
+		return -1;
+	} */
+
+	ca = address; // & (spi->info.block_size - 1);
+
+	tx[0] = read_opcode;
+	tx[1] = (uint8_t)(ca >> 16);
+	tx[2] = (uint8_t)(ca >> 8);
+	tx[3] = (uint8_t)(ca >> 0);
+	tx[3] = 0x0;
+	tx[4] = 0x0;
+
+	spi_transfer(spi, spi->info.mode, tx, txlen, buf, rxlen);
+
 	return len;
 }
