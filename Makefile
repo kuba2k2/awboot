@@ -11,7 +11,7 @@ SRCS := main.c boards/$(BOARD)/board.c
 
 INCLUDE_DIRS := -I . -I lib -I boards/$(BOARD)
 LIBS := -lgcc -nostdlib
-DEFINES := -DLOG_LEVEL=$(LOG_LEVEL) -DBOARD=$(BOARD) -DBUILD_REVISION=$(shell cat .build_revision)
+DEFINES := -DLOG_LEVEL=$(LOG_LEVEL) -DBOARD=$(BOARD) -DBUILD_REVISION=\"$(shell git describe --tags --abbrev=7 --always || echo unknown)\"
 
 include	arch/arm32/arm32.mk
 include	lib/lib.mk
@@ -27,14 +27,6 @@ CC=$(CROSS_COMPILE)-gcc
 SIZE=$(CROSS_COMPILE)-size
 OBJCOPY=$(CROSS_COMPILE)-objcopy
 
-HOSTCC=gcc
-HOSTSTRIP=strip
-DATE=/bin/date
-CAT=/bin/cat
-ECHO=/bin/echo
-WORKDIR=$(/bin/pwd)
-MAKE=make
-
 # Objects
 EXT_OBJS =
 OBJ_DIR = build-$(BOARD)
@@ -49,16 +41,13 @@ begin:
 	@echo -n "Compiler version: "
 	@$(CC) -v 2>&1 | tail -1
 
-build_revision:
-	@expr `cat .build_revision` + 1 > .build_revision
-
 .PHONY: tools boot.img
 .SILENT:
 
 git:
 	cp -f tools/hooks/* .git/hooks/
 
-build: build_revision $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
+build: $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
 
 .SECONDARY : $(TARGET)
 .PRECIOUS : $(OBJS)

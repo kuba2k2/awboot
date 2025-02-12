@@ -195,7 +195,10 @@ int main(void)
 	sunxi_clk_init();
 
 	message("\r\n");
-	info("AWBoot r%" PRIu32 " starting...\r\n", (u32)BUILD_REVISION);
+	info("AWBoot %s starting...\r\n", BUILD_REVISION);
+	info("Built on "__DATE__
+		 " at "__TIME__
+		 "\r\n");
 
 	msize = sunxi_dram_init() >> 20;
 	info("DRAM size: %luMB\r\n", msize);
