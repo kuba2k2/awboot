@@ -8,6 +8,7 @@
 #include "io.h"
 #include "types.h"
 #include "debug.h"
+#include "board.h"
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
@@ -36,24 +37,18 @@ static inline unsigned int swap_uint32(unsigned int data)
 	return a | b | c | d;
 }
 
-#define FILENAME_MAX_LEN 64
-typedef struct {
-	unsigned int   offset;
-	unsigned int   length;
-	unsigned char *dest;
-
-	unsigned int   of_offset;
-	unsigned char *of_dest;
-
-	char filename[FILENAME_MAX_LEN];
-	char of_filename[FILENAME_MAX_LEN];
-} image_info_t;
-
 void	 udelay(uint64_t us);
 void	 mdelay(uint32_t ms);
 void	 sdelay(uint32_t loops);
 uint32_t time_ms(void);
 uint64_t time_us(void);
 void	 reset();
+
+extern unsigned long sdram_size;
+
+int load_fel(void *kernel_entry, void *kernel_param);
+int load_sdcard(void *kernel_entry, void *kernel_param);
+int load_spinand(void *kernel_entry, void *kernel_param);
+int load_spinor(void *kernel_entry, void *kernel_param);
 
 #endif

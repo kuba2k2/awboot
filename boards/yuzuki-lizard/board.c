@@ -45,7 +45,7 @@ sdhci_t sdhci0 = {
 	.gpio_d3   = {GPIO_PIN(PORTF, 4), GPIO_PERIPH_MUX2},
 };
 
-gpio_t led_blue = GPIO_PIN(PORTF, 6);
+static gpio_t led_blue = GPIO_PIN(PORTF, 6);
 
 void board_init_led(gpio_t led)
 {
@@ -65,5 +65,5 @@ void board_init()
 #ifdef CONFIG_ENABLE_CONSOLE
 	gic400_init();
 #endif
-	sunxi_usart_init(&usart_dbg);
+	sunxi_usart_init(&USART_DBG);
 }

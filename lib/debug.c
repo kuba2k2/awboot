@@ -3,6 +3,8 @@
 #include "main.h"
 #include "board.h"
 
+extern sunxi_usart_t USART_DBG;
+
 void message(const char *fmt, ...)
 {
 	va_list args;

@@ -7,7 +7,7 @@ BOARD ?= mangopi-dual
 SOC := $(shell grep "#define SOC" boards/$(BOARD)/board.h | cut -d \" -f2)
 TARGET := awboot-$(BOARD)
 
-SRCS := main.c boards/$(BOARD)/board.c
+SRCS := main.c main_fel.c boards/$(BOARD)/board.c
 
 INCLUDE_DIRS := -I . -I lib -I boards/$(BOARD)
 LIBS := -lgcc -nostdlib

@@ -1,0 +1,22 @@
+#pragma once
+
+#include "dram.h"
+
+#define CONFIG_BOOT_IMG_ADDR_FEL	 (SDRAM_BASE + SDRAM_SIZE - (16 * 1024 * 1024))
+#define CONFIG_BOOT_IMG_FILENAME	 "boot.img"
+#define CONFIG_BOOT_IMG_ADDR_SPINAND (128 * 1024)
+#define CONFIG_BOOT_IMG_ADDR_SPINOR	 (4096)
+
+#define CONFIG_FATFS_CACHE_SIZE		 (64 * 1024 * 1024)
+#define CONFIG_FATFS_CACHE_ADDR		 (CONFIG_BOOT_IMG_ADDR_FEL - CONFIG_FATFS_CACHE_SIZE)
+#define CONFIG_SDMMC_SPEED_TEST_SIZE 1024 // (unit: 512B sectors)
+
+#define CONFIG_BOOT_IMG_BUF_SIZE (4096)
+#define CONFIG_BOOT_IMG_BUF_ADDR (CONFIG_FATFS_CACHE_ADDR - CONFIG_BOOT_IMG_BUF_SIZE)
+
+// only used in dma_test()
+#define CONFIG_DTB_LOAD_ADDR	(CONFIG_FATFS_CACHE_ADDR - (512 * 1024))
+#define CONFIG_KERNEL_LOAD_ADDR (CONFIG_DTB_LOAD_ADDR - (512 * 1024))
+
+extern void board_init(void);
+extern int	board_sdhci_init(void);

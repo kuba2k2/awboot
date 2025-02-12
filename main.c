@@ -13,10 +13,7 @@
 #include "console.h"
 #include "barrier.h"
 
-extern void			 board_init(void);
-extern unsigned long sunxi_dram_init(void);
-
-image_info_t image;
+unsigned long sdram_size;
 
 /* Linux zImage Header */
 #define LINUX_ZIMAGE_MAGIC 0x016f2818
@@ -189,7 +186,7 @@ int load_spi_nand(sunxi_spi_t *spi, image_info_t *image)
 
 int main(void)
 {
-	uint32_t msize;
+	linux_zimage_header_t *zimage_header;
 
 	board_init();
 	sunxi_clk_init();
@@ -200,88 +197,58 @@ int main(void)
 		 " at "__TIME__
 		 "\r\n");
 
-	msize = sunxi_dram_init() >> 20;
-	info("DRAM size: %luMB\r\n", msize);
-
-	//	arm32_mmu_enable(SDRAM_BASE, msize);
+	sdram_size = sunxi_dram_init();
+	info("DRAM size: %lu MiB\r\n", sdram_size >> 20);
 
 #ifdef CONFIG_ENABLE_CONSOLE
+	extern sunxi_usart_t USART_DBG;
+
 	console_init(&USART_DBG);
 	console_handler(CONSOLE_NO_TIMEOUT);
 #endif
 
-	unsigned int entry_point = 0;
 	void (*kernel_entry)(int zero, int arch, unsigned int params);
+	unsigned int kernel_param;
 
 #ifdef CONFIG_ENABLE_CPU_FREQ_DUMP
 	sunxi_clk_dump();
 #endif
 
-	memset(&image, 0, sizeof(image_info_t));
-
-	image.of_dest = (u8 *)CONFIG_DTB_LOAD_ADDR;
-	image.dest	  = (u8 *)CONFIG_KERNEL_LOAD_ADDR;
-
-#if defined(CONFIG_BOOT_SDCARD) || defined(CONFIG_BOOT_MMC)
-
-	strcpy(image.filename, CONFIG_KERNEL_FILENAME);
-	strcpy(image.of_filename, CONFIG_DTB_FILENAME);
-
-	if (sunxi_sdhci_init(&sdhci0) != 0) {
-		fatal("SMHC: %s controller init failed\r\n", sdhci0.name);
-	} else {
-		info("SMHC: %s controller v%" PRIx32 " initialized\r\n", sdhci0.name, sdhci0.reg->vers);
-	}
-	if (sdmmc_init(&card0, &sdhci0) != 0) {
-#ifdef CONFIG_BOOT_SPINAND
-		warning("SMHC: init failed, trying SPI\r\n");
-		goto _spi;
-#else
-		fatal("SMHC: init failed\r\n");
-#endif
-	}
-
-#ifdef CONFIG_BOOT_SPINAND
-	if (load_sdcard(&image) != 0) {
-		warning("SMHC: loading failed, trying SPI\r\n");
-	} else {
+#ifdef CONFIG_BOOT_FEL
+	if (load_fel(&kernel_entry, &kernel_param) == 0)
 		goto _boot;
-	}
-#else
-	if (load_sdcard(&image) != 0) {
-		fatal("SMHC: card load failed\r\n");
-	} else {
+	else
+		warning("BOOT: FEL boot failed\r\n");
+#endif
+
+#ifdef CONFIG_BOOT_SDCARD
+	if (load_sdcard(&kernel_entry, &kernel_param) == 0)
 		goto _boot;
-	}
-#endif // CONFIG_SPI_NAND
+	else
+		warning("BOOT: SD card boot failed\r\n");
 #endif
 
 #ifdef CONFIG_BOOT_SPINAND
-#if defined(CONFIG_BOOT_SDCARD) || defined(CONFIG_BOOT_MMC)
-_spi:
+	if (load_spinand(&kernel_entry, &kernel_param) == 0)
+		goto _boot;
+	else
+		warning("BOOT: SPI-NAND boot failed\r\n");
 #endif
-	dma_init();
-	dma_test();
 
-	debug("SPI: init\r\n");
-	if (sunxi_spi_init(&sunxi_spi0) != 0) {
-		fatal("SPI: init failed\r\n");
-	}
+#ifdef CONFIG_BOOT_SPINOR
+	if (load_spinor(&kernel_entry, &kernel_param) == 0)
+		goto _boot;
+	else
+		warning("BOOT: SPI-NOR boot failed\r\n");
+#endif
 
-	if (load_spi_nand(&sunxi_spi0, &image) != 0) {
-		fatal("SPI-NAND: loading failed\r\n");
-	}
+	fatal("BOOT: all boot options failed\r\n");
 
-	sunxi_spi_disable(&sunxi_spi0);
-	dma_exit();
-
-#endif // CONFIG_SPI_NAND
-
-#if defined(CONFIG_BOOT_SDCARD) || defined(CONFIG_BOOT_MMC)
 _boot:
-#endif
-	if (boot_image_setup((unsigned char *)image.dest, &entry_point)) {
-		fatal("boot setup failed\r\n");
+
+	zimage_header = (linux_zimage_header_t *)kernel_entry;
+	if (zimage_header->magic != LINUX_ZIMAGE_MAGIC) {
+		fatal("unsupported kernel image\r\n");
 	}
 
 #ifdef CONFIG_CMD_LINE_ARGS
@@ -289,15 +256,16 @@ _boot:
 	fixup_chosen_node(image.of_dest, CONFIG_CMD_LINE_ARGS);
 #endif
 
-	info("booting linux...\r\n");
+	kernel_entry = (void *)((unsigned int)kernel_entry + zimage_header->start);
+
+	info("BOOT: booting Linux @ 0x%x\r\n", (unsigned int)kernel_entry);
 
 	arm32_mmu_disable();
 	arm32_dcache_disable();
 	arm32_icache_disable();
 	arm32_interrupt_disable();
 
-	kernel_entry = (void (*)(int, int, unsigned int))entry_point;
-	kernel_entry(0, ~0, (unsigned int)image.of_dest);
+	kernel_entry(0, 0x0, kernel_param);
 
 	return 0;
 }

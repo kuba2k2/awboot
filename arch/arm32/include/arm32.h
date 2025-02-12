@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #include "board.h"
+#include "main.h"
 
 extern void v7_flush_dcache_all(void);
 

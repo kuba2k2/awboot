@@ -12,6 +12,8 @@ SRCS    +=  $(FS_FAT)/ffsystem.c
 SRCS    +=  $(FS_FAT)/ffunicode.c
 #endif
 
+SRCS	+=  $(LIB)/atag.c
+SRCS	+=  $(LIB)/bootimg.c
 SRCS	+=  $(LIB)/debug.c
 SRCS	+=  $(LIB)/console.c
 SRCS	+=  $(LIB)/fdt.c
