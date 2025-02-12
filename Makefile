@@ -5,6 +5,9 @@ CROSS_COMPILE ?= arm-none-eabi
 # Log level defaults to info
 LOG_LEVEL ?= 30
 
+BOARD ?= $(error Please set BOARD variable)
+SOC ?= $(error Please set SOC variable: t113-s3, t113-s4, v851s)
+
 SRCS := main.c boards/board-$(BOARD).c
 
 INCLUDE_DIRS :=-I . -I lib -I boards
@@ -55,7 +58,7 @@ link_board:
 	@/bin/ln -fs board-$(BOARD).h boards/board.h
 
 .PHONY: tools boot.img
-#.SILENT:
+.SILENT:
 
 git:
 	cp -f tools/hooks/* .git/hooks/
