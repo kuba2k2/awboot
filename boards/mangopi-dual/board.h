@@ -13,6 +13,6 @@
 
 #define CONFIG_BOOT_FEL
 // #define CONFIG_BOOT_MMC
-// #define CONFIG_BOOT_SDCARD
+#define CONFIG_BOOT_SDCARD
 // #define CONFIG_BOOT_SPINAND
 // #define CONFIG_BOOT_SPINOR
