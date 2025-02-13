@@ -9,8 +9,16 @@
 #define LOG_DEBUG 40
 #define LOG_TRACE 50
 
+#define ANSI_RESET	 "\x1B[0m"
+#define ANSI_CYAN	 "\x1B[36m"
+#define ANSI_BLUE	 "\x1B[34m"
+#define ANSI_GREEN	 "\x1B[32m"
+#define ANSI_YELLOW	 "\x1B[33m"
+#define ANSI_RED	 "\x1B[31m"
+#define ANSI_MAGENTA "\x1B[35m"
+
 #if LOG_LEVEL >= LOG_TRACE
-#define trace(fmt, ...) message("[T] " fmt, ##__VA_ARGS__)
+#define trace(fmt, ...) message(ANSI_CYAN "[T] " ANSI_RESET fmt, ##__VA_ARGS__)
 #define UNUSED_TRACE
 #else
 #define trace(...)
@@ -18,7 +26,7 @@
 #endif
 
 #if LOG_LEVEL >= LOG_DEBUG
-#define debug(fmt, ...) message("[D] " fmt, ##__VA_ARGS__)
+#define debug(fmt, ...) message(ANSI_BLUE "[D] " ANSI_RESET fmt, ##__VA_ARGS__)
 #define UNUSED_DEBUG
 #else
 #define debug(...)
@@ -26,7 +34,7 @@
 #endif
 
 #if LOG_LEVEL >= LOG_INFO
-#define info(fmt, ...) message("[I] " fmt, ##__VA_ARGS__)
+#define info(fmt, ...) message(ANSI_GREEN "[I] " ANSI_RESET fmt, ##__VA_ARGS__)
 #define UNUSED_INFO
 #else
 #define info(...)
@@ -34,7 +42,7 @@
 #endif
 
 #if LOG_LEVEL >= LOG_WARNING
-#define warning(fmt, ...) message("[W] " fmt, ##__VA_ARGS__)
+#define warning(fmt, ...) message(ANSI_YELLOW "[W] " ANSI_RESET fmt, ##__VA_ARGS__)
 #define UNUSED_WARNING
 #else
 #define warning(...)
@@ -42,18 +50,18 @@
 #endif
 
 #if LOG_LEVEL >= LOG_ERROR
-#define error(fmt, ...) message("[E] " fmt, ##__VA_ARGS__)
+#define error(fmt, ...) message(ANSI_RED "[E] " ANSI_RESET fmt, ##__VA_ARGS__)
 #define UNUSED_ERROR
 #else
 #define error(...)
 #define UNUSED_ERROR __attribute__((__unused__))
 #endif
 
-#define fatal(fmt, ...)                                         \
-	{                                                           \
-		message("[F] " fmt "restarting...\r\n", ##__VA_ARGS__); \
-		mdelay(100);                                            \
-		reset();                                                \
+#define fatal(fmt, ...)                                                                 \
+	{                                                                                   \
+		message(ANSI_MAGENTA "[F] " ANSI_RESET fmt "restarting...\r\n", ##__VA_ARGS__); \
+		mdelay(100);                                                                    \
+		reset();                                                                        \
 	}
 
 void __attribute__((format(printf, 1, 2))) message(const char *fmt, ...);
