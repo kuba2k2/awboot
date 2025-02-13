@@ -19,7 +19,7 @@ HOSTCXX ?= g++
 all: tools
 tools: $(MKSUNXI)
 
-.PHONY: all tools clean
+.PHONY: all clean
 .SILENT:
 
 clean:

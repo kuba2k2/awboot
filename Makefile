@@ -39,14 +39,14 @@ BUILD_OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 BUILD_OBJSA = $(ASRCS:%.S=$(OBJ_DIR)/%.o)
 OBJS = $(BUILD_OBJSA) $(BUILD_OBJS)
 
-all: begin build mkboot
+all: begin mkboot
 
 begin:
 	@echo "---------------------------------------------------------------"
 	@echo -n "Compiler version: "
 	@$(CC) -v 2>&1 | tail -1
 
-.PHONY: tools boot.img
+.PHONY: all clean
 .SILENT:
 
 build: $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
@@ -66,12 +66,10 @@ $(OBJ_DIR)/$(TARGET)-boot.elf: $(OBJS)
 $(OBJ_DIR)/$(TARGET)-fel.bin: $(OBJ_DIR)/$(TARGET)-fel.elf
 	@echo OBJCOPY $@
 	$(OBJCOPY) -O binary $< $@
-	$(SIZE) $<
 
 $(OBJ_DIR)/$(TARGET)-boot.bin: $(OBJ_DIR)/$(TARGET)-boot.elf
 	@echo OBJCOPY $@
 	$(OBJCOPY) -O binary $< $@
-	$(SIZE) $<
 
 $(OBJ_DIR)/%.o : %.c
 	echo "  CC    $@"
@@ -87,11 +85,7 @@ $(OBJ_DIR)/%.o : %.S
 
 clean:
 	rm -rf $(OBJ_DIR)
-	rm -f $(TARGET)
 	rm -f $(TARGET)-*.bin
-	rm -f $(TARGET)-*.map
-	rm -f boards/board.h
-	rm -f *.img
 	rm -f *.d
 	$(MAKE) -C tools clean
 
@@ -102,20 +96,21 @@ tools:
 	$(MAKE) -C tools all
 
 mkboot: build tools
-	cp $(OBJ_DIR)/$(TARGET)-fel.bin $(TARGET)-fel.bin
-	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot.bin
-	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-spi.bin
-	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-spi-4k.bin
-	cp $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-sd.bin
+	$(SIZE) $(OBJ_DIR)/$(TARGET)-boot.elf
+	cp -f $(OBJ_DIR)/$(TARGET)-fel.bin $(TARGET)-fel.bin
+	cp -f $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-sd.bin
+	cp -f $(OBJ_DIR)/$(TARGET)-boot.bin $(TARGET)-boot-spi.bin
 	tools/mksunxi $(TARGET)-fel.bin 8192
-	tools/mksunxi $(TARGET)-boot-spi.bin 8192
-	tools/mksunxi $(TARGET)-boot-spi-4k.bin 8192 4096
 	tools/mksunxi $(TARGET)-boot-sd.bin 512
+	tools/mksunxi $(TARGET)-boot-spi.bin 8192
 
-spi-boot.img: mkboot
-	rm -f spi-boot.img
-	dd if=$(TARGET)-boot-spi.bin of=spi-boot.img bs=2k
-	dd if=$(TARGET)-boot-spi.bin of=spi-boot.img bs=2k seek=32 # Second copy on page 32
-	dd if=$(TARGET)-boot-spi.bin of=spi-boot.img bs=2k seek=64 # Third copy on page 64
-	# dd if=linux/boot/$(DTB) of=spi-boot.img bs=2k seek=128 # DTB on page 128
-	# dd if=linux/boot/$(KERNEL) of=spi-boot.img bs=2k seek=256 # Kernel on page 256
+boot: mkboot
+	xfel ddr $(SOC)
+	xfel write 0x30000 $(TARGET)-fel.bin
+	xfel write 0x47000000 boot.img || true
+	xfel exec 0x30000
+
+flash-spinor: mkboot
+	xfel spinor
+	xfel spinor erase 0 0x8000
+	xfel spinor write 0 $(TARGET)-boot-spi.bin
