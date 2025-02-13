@@ -17,6 +17,9 @@
 #define ALIGN(size, align) (((size) + (align) - 1) & (~((align) - 1)))
 #define OF_ALIGN(size)	   ALIGN(size, 4)
 
+#define STRINGIFY(x)	   #x
+#define STRINGIFY_MACRO(x) STRINGIFY(x)
+
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 

@@ -46,13 +46,15 @@ int main(void) {
 	sunxi_clk_init();
 
 	message("\r\n");
-	info("AWBoot %s starting...\r\n", BUILD_REVISION);
-	info("Built on "__DATE__
-		 " at "__TIME__
-		 "\r\n");
+	info("AWBoot starting...\r\n");
+	info("Build date: " __DATE__ " at " __TIME__ "\r\n");
+	info("Revision:   " BUILD_REVISION "\r\n");
+	info("Board:      " STRINGIFY_MACRO(BOARD) "\r\n");
+	info("SoC:        " SOC " @ %d MHz\r\n", CONFIG_CPU_FREQ / 1000000);
 
 	sdram_size = sunxi_dram_init();
-	info("DRAM size: %lu MiB\r\n", sdram_size >> 20);
+	info("DRAM size:  %lu MiB\r\n", sdram_size >> 20);
+	info("\r\n");
 
 #ifdef CONFIG_ENABLE_CONSOLE
 	extern sunxi_usart_t USART_DBG;
