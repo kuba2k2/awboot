@@ -1,40 +1,45 @@
 # Target
-CROSS_COMPILE ?= arm-none-eabi
+CROSS_COMPILE ?= arm-none-eabi-
+
+CC = $(CROSS_COMPILE)gcc
+LD = $(CROSS_COMPILE)ld
+OBJCOPY = $(CROSS_COMPILE)objcopy
+OBJDUMP = $(CROSS_COMPILE)objdump
+SIZE = $(CROSS_COMPILE)size
 
 # Log level defaults to info
 LOG_LEVEL ?= 30
 BOARD ?= mangopi-dual
-SOC := $(shell grep "#define SOC" boards/$(BOARD)/board.h | cut -d \" -f2)
+SOC := $(shell grep "\#define SOC" boards/$(BOARD)/board.h | cut -d \" -f2)
 TARGET := awboot-$(BOARD)
+BUILD_REVISION ?= $(shell git describe --tags --abbrev=7 --always || echo unknown)
+
+CFLAGS += -DLOG_LEVEL=$(LOG_LEVEL)
+CFLAGS += -DBOARD=$(BOARD)
+CFLAGS += -DBUILD_REVISION=\"$(BUILD_REVISION)\"
+CFLAGS += -I . -I lib -I boards/$(BOARD)
 
 SRCS := main.c main_fel.c main_sdcard.c main_spinor.c boards/$(BOARD)/board.c
-
-INCLUDE_DIRS := -I . -I lib -I boards/$(BOARD)
-LIBS := -lgcc -nostdlib
-DEFINES := -DLOG_LEVEL=$(LOG_LEVEL) -DBOARD=$(BOARD) -DBUILD_REVISION=\"$(shell git describe --tags --abbrev=7 --always || echo unknown)\"
+ASRCS :=
 
 include	arch/arm32/arm32.mk
 include	lib/lib.mk
 
-CFLAGS += -mcpu=cortex-a7 -mthumb-interwork -mthumb -mno-unaligned-access -mfpu=neon-vfpv4 -mfloat-abi=hard
-CFLAGS += -ffast-math -ffunction-sections -fdata-sections -Os -std=gnu99 -Wall -Werror -Wno-unused-function -g -MMD $(INCLUDES) $(DEFINES)
+CFLAGS += -ffunction-sections -fdata-sections -ffast-math
+CFLAGS += -fno-stack-protector -fno-builtin -ffreestanding
+CFLAGS += -Os -std=gnu99 -Wall -Werror -Wno-unused-function -Wno-format
+CFLAGS += -g -MMD
 
 ASFLAGS += $(CFLAGS) -Wl,--entry=reset
-LDFLAGS += $(CFLAGS) $(LIBS) -Wl,--gc-sections
-
-STRIP=$(CROSS_COMPILE)-strip
-CC=$(CROSS_COMPILE)-gcc
-SIZE=$(CROSS_COMPILE)-size
-OBJCOPY=$(CROSS_COMPILE)-objcopy
+LDFLAGS += $(CFLAGS) -Wl,--gc-sections -nostdlib -lgcc
 
 # Objects
-EXT_OBJS =
 OBJ_DIR = build-$(BOARD)
 BUILD_OBJS = $(SRCS:%.c=$(OBJ_DIR)/%.o)
 BUILD_OBJSA = $(ASRCS:%.S=$(OBJ_DIR)/%.o)
-OBJS = $(BUILD_OBJSA) $(BUILD_OBJS) $(EXT_OBJS)
+OBJS = $(BUILD_OBJSA) $(BUILD_OBJS)
 
-all: git begin build mkboot
+all: begin build mkboot
 
 begin:
 	@echo "---------------------------------------------------------------"
@@ -43,9 +48,6 @@ begin:
 
 .PHONY: tools boot.img
 .SILENT:
-
-git:
-	cp -f tools/hooks/* .git/hooks/
 
 build: $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
 

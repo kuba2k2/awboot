@@ -13,8 +13,8 @@ INCLUDES = -I includes -I ../lib
 CFLAGS   = -O2 -std=gnu99 $(INCLUDES)
 CXXFLAGS = -O2 -std=gnu++11 $(INCLUDES)
 
-CC  ?= gcc
-CXX ?= g++
+HOSTCC ?= gcc
+HOSTCXX ?= g++
 
 all: tools
 tools: $(MKSUNXI)
@@ -27,15 +27,15 @@ clean:
 	rm -f $(MKSUNXI)
 
 $(BUILD_DIR)/%.o : %.c
-	echo "  CC    $@"
+	echo "HOSTCC  $@"
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(HOSTCC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.opp : %.cpp
-	echo "  CXX   $@"
+	echo "HOSTCXX $@"
 	mkdir -p $(@D)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(HOSTCXX) $(CXXFLAGS) -c $< -o $@
 
 $(MKSUNXI): $(COBJS)
-	echo "  LD    $@"
-	$(CC) $(CFLAGS) $(COBJS) -o $(MKSUNXI)
+	echo "HOSTLD  $@"
+	$(HOSTCC) $(CFLAGS) $(COBJS) -o $(MKSUNXI)

@@ -3,8 +3,9 @@ SUNXI:=$(ARCH)/sunxi
 
 CPU:=$(SUNXI)/$(SOC)
 
-INCLUDE_DIRS += -I $(ARCH)/include -I $(CPU) -I $(SUNXI) -I ./
-#-I $(ARCH)/include/cmsis
+CFLAGS += -mcpu=cortex-a7 -mthumb-interwork -mthumb -mno-unaligned-access
+CFLAGS += -mfpu=neon-vfpv4 -mfloat-abi=hard
+CFLAGS += -I $(ARCH)/include -I $(CPU) -I $(SUNXI) -I ./
 
 ASRCS	+=  $(SUNXI)/start.S
 
@@ -21,6 +22,3 @@ SRCS	+=  $(SUNXI)/sdmmc.c
 
 SRCS	+=  $(CPU)/dram.c
 SRCS	+=  $(CPU)/sunxi_clk.c
-
-
-
