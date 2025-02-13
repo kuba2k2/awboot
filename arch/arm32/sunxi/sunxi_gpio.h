@@ -40,13 +40,13 @@ typedef uint32_t gpio_t;
 #define GPIO_PIN(x, y) (((uint32_t)(x << PIO_NUM_IO_BITS)) | y)
 
 typedef struct {
-	gpio_t	pin;
+	gpio_t pin;
 	uint8_t mux;
 } gpio_mux_t;
 
 extern void sunxi_gpio_init(gpio_t pin, int cfg);
 extern void sunxi_gpio_set_value(gpio_t pin, int value);
-extern int	sunxi_gpio_read(gpio_t pin);
+extern int sunxi_gpio_read(gpio_t pin);
 extern void sunxi_gpio_set_pull(gpio_t pin, enum gpio_pull_t pull);
 
 #endif

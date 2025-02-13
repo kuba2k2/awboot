@@ -1,22 +1,24 @@
 #include "main.h"
+
+#include "arm32.h"
+#include "barrier.h"
+#include "board.h"
+#include "console.h"
+#include "debug.h"
 #include "fdt.h"
 #include "ff.h"
+#include "sdmmc.h"
+#include "sunxi_clk.h"
+#include "sunxi_dma.h"
 #include "sunxi_gpio.h"
 #include "sunxi_sdhci.h"
 #include "sunxi_spi.h"
-#include "sunxi_clk.h"
-#include "sunxi_dma.h"
-#include "sdmmc.h"
-#include "arm32.h"
-#include "debug.h"
-#include "board.h"
-#include "console.h"
-#include "barrier.h"
 
 unsigned long sdram_size;
 
 /* Linux zImage Header */
 #define LINUX_ZIMAGE_MAGIC 0x016f2818
+
 typedef struct {
 	unsigned int code[9];
 	unsigned int magic;
@@ -24,8 +26,7 @@ typedef struct {
 	unsigned int end;
 } linux_zimage_header_t;
 
-static int boot_image_setup(unsigned char *addr, unsigned int *entry)
-{
+static int boot_image_setup(unsigned char *addr, unsigned int *entry) {
 	linux_zimage_header_t *zimage_header = (linux_zimage_header_t *)addr;
 
 	if (zimage_header->magic == LINUX_ZIMAGE_MAGIC) {
@@ -38,8 +39,7 @@ static int boot_image_setup(unsigned char *addr, unsigned int *entry)
 	return -1;
 }
 
-int main(void)
-{
+int main(void) {
 	linux_zimage_header_t *zimage_header;
 
 	board_init();

@@ -6,13 +6,13 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+
 #include "board.h"
 #include "main.h"
 
 extern void v7_flush_dcache_all(void);
 
-static inline uint32_t arm32_read_p15_c1(void)
-{
+static inline uint32_t arm32_read_p15_c1(void) {
 	uint32_t value;
 
 	__asm__ __volatile__("mrc p15, 0, %0, c1, c0, 0" : "=r"(value) : : "memory");
@@ -20,14 +20,12 @@ static inline uint32_t arm32_read_p15_c1(void)
 	return value;
 }
 
-static inline void arm32_write_p15_c1(uint32_t value)
-{
+static inline void arm32_write_p15_c1(uint32_t value) {
 	__asm__ __volatile__("mcr p15, 0, %0, c1, c0, 0" : : "r"(value) : "memory");
 	arm32_read_p15_c1();
 }
 
-static inline void arm32_interrupt_enable(void)
-{
+static inline void arm32_interrupt_enable(void) {
 	uint32_t tmp;
 
 	__asm__ __volatile__("mrs %0, cpsr\n"
@@ -38,8 +36,7 @@ static inline void arm32_interrupt_enable(void)
 						 : "memory");
 }
 
-static inline void arm32_interrupt_disable(void)
-{
+static inline void arm32_interrupt_disable(void) {
 	uint32_t tmp;
 
 	__asm__ __volatile__("mrs %0, cpsr\n"
@@ -50,8 +47,7 @@ static inline void arm32_interrupt_disable(void)
 						 : "memory");
 }
 
-static inline void arm32_mmu_enable(const uint32_t dram_base, uint32_t dram_size)
-{
+static inline void arm32_mmu_enable(const uint32_t dram_base, uint32_t dram_size) {
 	uint32_t mmu_base;
 
 	/* use dram high 16M */
@@ -61,7 +57,7 @@ static inline void arm32_mmu_enable(const uint32_t dram_base, uint32_t dram_size
 	uint32_t *mmu_base_addr = (uint32_t *)(dram_base + ((dram_size - 1) << 20));
 	uint32_t *page_table	= mmu_base_addr;
 
-	int		 i;
+	int i;
 	uint32_t reg;
 
 	/* the front 1M contain BROM/SRAM */
@@ -115,8 +111,7 @@ static inline void arm32_mmu_enable(const uint32_t dram_base, uint32_t dram_size
 	asm volatile("isb");
 }
 
-static inline void arm32_mmu_disable(void)
-{
+static inline void arm32_mmu_disable(void) {
 	uint32_t reg;
 #ifdef CONFIG_USE_DCACHE
 	/* flush dcache */
@@ -142,8 +137,7 @@ static inline void arm32_mmu_disable(void)
 	asm volatile("isb");
 }
 
-static inline void arm32_dcache_enable(void)
-{
+static inline void arm32_dcache_enable(void) {
 	u32 reg;
 	/* and enable the mmu */
 	asm volatile("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r"(reg) : : "cc");
@@ -154,8 +148,7 @@ static inline void arm32_dcache_enable(void)
 	asm volatile("isb");
 }
 
-static inline void arm32_dcache_disable(void)
-{
+static inline void arm32_dcache_disable(void) {
 	u32 reg;
 	asm volatile("blx %0" : : "r"(v7_flush_dcache_all));
 	asm volatile("mrc p15, 0, %0, c1, c0, 0	@ get CR" : "=r"(reg) : : "cc");
@@ -165,14 +158,12 @@ static inline void arm32_dcache_disable(void)
 	asm volatile("isb");
 }
 
-static inline void arm32_icache_enable(void)
-{
+static inline void arm32_icache_enable(void) {
 	uint32_t value = arm32_read_p15_c1();
 	arm32_write_p15_c1(value | (1 << 12));
 }
 
-static inline void arm32_icache_disable(void)
-{
+static inline void arm32_icache_disable(void) {
 	uint32_t value = arm32_read_p15_c1();
 	arm32_write_p15_c1(value & ~(1 << 12));
 }

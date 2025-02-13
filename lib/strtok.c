@@ -1,19 +1,18 @@
 #include <inttypes.h>
 #include <string.h>
-#include "strtok.h"
-#include "main.h"
 
-char *strtok(char *s, const char *delim)
-{
+#include "main.h"
+#include "strtok.h"
+
+char *strtok(char *s, const char *delim) {
 	static char *last;
 
 	return strtok_r(s, delim, &last);
 }
 
-char *strtok_r(char *s, const char *delim, char **last)
-{
+char *strtok_r(char *s, const char *delim, char **last) {
 	char *spanp;
-	int	  c, sc;
+	int c, sc;
 	char *tok;
 
 	if (s == NULL && (s = *last) == NULL)

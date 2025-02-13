@@ -1,8 +1,8 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
-#include "main.h"
 #include "board.h"
+#include "main.h"
 #include "sunxi_usart.h"
 
 #define CONSOLE_BUFFER_SIZE 128
@@ -18,8 +18,8 @@
 
 typedef struct {
 	sunxi_usart_t *usart;
-	char		   cmd[CONSOLE_BUFFER_SIZE];
-	char			 *cmd_ptr;
+	char cmd[CONSOLE_BUFFER_SIZE];
+	char *cmd_ptr;
 } console_t;
 
 typedef struct {

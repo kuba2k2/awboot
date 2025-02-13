@@ -1,6 +1,7 @@
 #include "bootimg.h"
 
 #include "main.h"
+
 #include "atag.h"
 #include "dram.h"
 
@@ -12,12 +13,11 @@
 		}                                         \
 	} while (0)
 
-int boot_img_load(boot_img_read_func func, void *param, unsigned int *kernel_entry, unsigned int *kernel_param)
-{
-	boot_img_hdr   hdr;
+int boot_img_load(boot_img_read_func func, void *param, unsigned int *kernel_entry, unsigned int *kernel_param) {
+	boot_img_hdr hdr;
 	unsigned char *buf;
-	unsigned int   page_size = CONFIG_BOOT_IMG_BUF_SIZE;
-	unsigned int   kernel_pages, ramdisk_pages, second_pages;
+	unsigned int page_size = CONFIG_BOOT_IMG_BUF_SIZE;
+	unsigned int kernel_pages, ramdisk_pages, second_pages;
 
 	READ(&hdr, sizeof(hdr));
 

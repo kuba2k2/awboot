@@ -18,7 +18,7 @@
 /* structures for each atag */
 struct atag_header {
 	u32 size; /* length of tag in words including this header */
-	u32 tag; /* tag type */
+	u32 tag;  /* tag type */
 };
 
 struct atag_core {
@@ -33,14 +33,14 @@ struct atag_mem {
 };
 
 struct atag_videotext {
-	u8	x;
-	u8	y;
+	u8 x;
+	u8 y;
 	u16 video_page;
-	u8	video_mode;
-	u8	video_cols;
+	u8 video_mode;
+	u8 video_cols;
 	u16 video_ega_bx;
-	u8	video_lines;
-	u8	video_isvga;
+	u8 video_lines;
+	u8 video_isvga;
 	u16 video_points;
 };
 
@@ -71,14 +71,14 @@ struct atag_videolfb {
 	u16 lfb_linelength;
 	u32 lfb_base;
 	u32 lfb_size;
-	u8	red_size;
-	u8	red_pos;
-	u8	green_size;
-	u8	green_pos;
-	u8	blue_size;
-	u8	blue_pos;
-	u8	rsvd_size;
-	u8	rsvd_pos;
+	u8 red_size;
+	u8 red_pos;
+	u8 green_size;
+	u8 green_pos;
+	u8 blue_size;
+	u8 blue_pos;
+	u8 rsvd_size;
+	u8 rsvd_pos;
 };
 
 struct atag_cmdline {
@@ -87,16 +87,17 @@ struct atag_cmdline {
 
 struct atag {
 	struct atag_header hdr;
+
 	union {
-		struct atag_core	  core;
-		struct atag_mem		  mem;
+		struct atag_core core;
+		struct atag_mem mem;
 		struct atag_videotext videotext;
-		struct atag_ramdisk	  ramdisk;
-		struct atag_initrd2	  initrd2;
-		struct atag_serialnr  serialnr;
-		struct atag_revision  revision;
-		struct atag_videolfb  videolfb;
-		struct atag_cmdline	  cmdline;
+		struct atag_ramdisk ramdisk;
+		struct atag_initrd2 initrd2;
+		struct atag_serialnr serialnr;
+		struct atag_revision revision;
+		struct atag_videolfb videolfb;
+		struct atag_cmdline cmdline;
 	} u;
 };
 

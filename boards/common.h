@@ -19,4 +19,4 @@
 #define CONFIG_KERNEL_LOAD_ADDR (CONFIG_DTB_LOAD_ADDR - (512 * 1024))
 
 extern void board_init(void);
-extern int	board_sdhci_init(void);
+extern int board_sdhci_init(void);

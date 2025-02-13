@@ -10,5 +10,7 @@ build/*
 build-*/*
 
 tools/mksunxi
+tools/mksunxi.exe
 
 *boot.img
+.*

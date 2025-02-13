@@ -1,18 +1,17 @@
 #include "main.h"
 
 #include "bootimg.h"
-#include "sunxi_sdhci.h"
 #include "ff.h"
 #include "sdmmc.h"
+#include "sunxi_sdhci.h"
 
 #define CHUNK_SIZE 0x20000
 
-static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len)
-{
-	UINT				  byte_to_read;
-	UINT				  byte_read;
-	UINT				  total_read = 0;
-	FRESULT				  fret;
+static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len) {
+	UINT byte_to_read;
+	UINT byte_read;
+	UINT total_read = 0;
+	FRESULT fret;
 	uint32_t UNUSED_DEBUG start, time;
 
 	start = time_ms();
@@ -33,18 +32,21 @@ static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len)
 		return -1;
 	}
 
-	debug("FATFS: read %u bytes in %" PRIu32 "ms at %.2fMB/S\r\n", total_read, time,
-		  (f32)(total_read / time) / 1024.0f);
+	debug(
+		"FATFS: read %u bytes in %" PRIu32 "ms at %.2fMB/S\r\n",
+		total_read,
+		time,
+		(f32)(total_read / time) / 1024.0f
+	);
 
 	return total_read;
 }
 
-int load_sdcard(void *kernel_entry, void *kernel_param)
-{
-	int				 ret;
-	FATFS			 fs;
-	FIL				 file;
-	FRESULT			 fret;
+int load_sdcard(void *kernel_entry, void *kernel_param) {
+	int ret;
+	FATFS fs;
+	FIL file;
+	FRESULT fret;
 	u32 UNUSED_DEBUG start;
 
 	if (sunxi_sdhci_init(&sdhci0) != 0) {
@@ -63,8 +65,12 @@ int load_sdcard(void *kernel_entry, void *kernel_param)
 	start = time_ms();
 	sdmmc_blk_read(&card0, (u8 *)(SDRAM_BASE), 0, CONFIG_SDMMC_SPEED_TEST_SIZE);
 	test_time = time_ms() - start;
-	debug("SDMMC: speedtest %uKB in %" PRIu32 "ms at %" PRIu32 "KB/S\r\n", (CONFIG_SDMMC_SPEED_TEST_SIZE * 512) / 1024,
-		  test_time, (CONFIG_SDMMC_SPEED_TEST_SIZE * 512) / test_time);
+	debug(
+		"SDMMC: speedtest %uKB in %" PRIu32 "ms at %" PRIu32 "KB/S\r\n",
+		(CONFIG_SDMMC_SPEED_TEST_SIZE * 512) / 1024,
+		test_time,
+		(CONFIG_SDMMC_SPEED_TEST_SIZE * 512) / test_time
+	);
 #endif // SDMMC_SPEED_TEST
 
 	start = time_ms();

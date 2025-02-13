@@ -1,18 +1,20 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
-#include "string.h"
-#include "io.h"
+#include <stddef.h>
+#include <stdint.h>
+
 #include "types.h"
-#include "debug.h"
+
 #include "board.h"
+#include "debug.h"
+#include "io.h"
+#include "string.h"
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 
-#define ALIGN(size, align) (((size) + (align)-1) & (~((align)-1)))
+#define ALIGN(size, align) (((size) + (align) - 1) & (~((align) - 1)))
 #define OF_ALIGN(size)	   ALIGN(size, 4)
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -25,24 +27,23 @@
 #define FALSE 0
 #define TRUE  1
 
-static inline unsigned int swap_uint32(unsigned int data)
-{
+static inline unsigned int swap_uint32(unsigned int data) {
 	volatile unsigned int a, b, c, d;
 
-	a = ((data)&0xff000000) >> 24;
-	b = ((data)&0x00ff0000) >> 8;
-	c = ((data)&0x0000ff00) << 8;
-	d = ((data)&0x000000ff) << 24;
+	a = ((data) & 0xff000000) >> 24;
+	b = ((data) & 0x00ff0000) >> 8;
+	c = ((data) & 0x0000ff00) << 8;
+	d = ((data) & 0x000000ff) << 24;
 
 	return a | b | c | d;
 }
 
-void	 udelay(uint64_t us);
-void	 mdelay(uint32_t ms);
-void	 sdelay(uint32_t loops);
+void udelay(uint64_t us);
+void mdelay(uint32_t ms);
+void sdelay(uint32_t loops);
 uint32_t time_ms(void);
 uint64_t time_us(void);
-void	 reset();
+void reset();
 
 extern unsigned long sdram_size;
 

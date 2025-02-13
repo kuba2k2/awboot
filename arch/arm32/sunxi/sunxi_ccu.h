@@ -20,7 +20,7 @@
 #define CCU_MBUS_MAT_CLK_GATING_REG (0x804)
 
 /* MMC clock bit field */
-#define CCU_MMC_CTRL_M(x)		  ((x)-1)
+#define CCU_MMC_CTRL_M(x)		  ((x) - 1)
 #define CCU_MMC_CTRL_N(x)		  ((x) << 8)
 #define CCU_MMC_CTRL_OSCM24		  (0x0 << 24)
 #define CCU_MMC_CTRL_PERI_400M	  (0x1 << 24)
@@ -29,8 +29,8 @@
 #define CCU_MMC_CTRL_PLL_PERIPH2X CCU_MMC_CTRL_PERI_300M
 #define CCU_MMC_CTRL_ENABLE		  (0x1 << 31)
 /* if doesn't have these delays */
-#define CCU_MMC_CTRL_OCLK_DLY(a) ((void)(a), 0)
-#define CCU_MMC_CTRL_SCLK_DLY(a) ((void)(a), 0)
+#define CCU_MMC_CTRL_OCLK_DLY(a)  ((void)(a), 0)
+#define CCU_MMC_CTRL_SCLK_DLY(a)  ((void)(a), 0)
 
 #define CCU_MMC_BGR_SMHC0_GATE (1 << 0)
 #define CCU_MMC_BGR_SMHC1_GATE (1 << 1)

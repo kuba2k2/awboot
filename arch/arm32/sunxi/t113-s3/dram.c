@@ -12,19 +12,19 @@
  * [1] https://github.com/szemzoa/awboot.git
  */
 
-#include <stdint.h>
-#include "dram.h"
+#include "main.h"
+
+#include "board.h"
 #include "debug.h"
+#include "dram.h"
 #include "reg-ccu.h"
 #include "reg-dram.h"
-#include "main.h"
-#include "board.h"
 
 #define readl(addr)		   read32(addr)
 #define writel(val, addr)  write32((addr), (val))
 #define udelay(c)		   sdelay(c)
 #define printf			   debug
-#define DIV_ROUND_UP(a, b) (((a) + (b)-1) / (b))
+#define DIV_ROUND_UP(a, b) (((a) + (b) - 1) / (b))
 
 #define clrsetbits_le32(addr, clear, set) write32((addr), (read32(addr) & ~(clear)) | (set))
 #define setbits_le32(addr, set)			  write32((addr), read32(addr) | (set))
@@ -44,21 +44,18 @@
 #define SUNXI_SID_BASE 0x3006200
 #endif
 
-static int ns_to_t(dram_para_t *para, int nanoseconds)
-{
+static int ns_to_t(dram_para_t *para, int nanoseconds) {
 	const unsigned int ctrl_freq = para->dram_clk / 2;
 
 	return DIV_ROUND_UP(ctrl_freq * nanoseconds, 1000);
 }
 
-void abort(void)
-{
+void abort(void) {
 	while (1)
 		;
 }
 
-static void sid_read_ldoB_cal(dram_para_t *para)
-{
+static void sid_read_ldoB_cal(dram_para_t *para) {
 	uint32_t reg;
 
 	reg = (readl(SYS_SID_BASE + SYS_LDOB_SID) & 0xff00) >> 8;
@@ -81,8 +78,7 @@ static void sid_read_ldoB_cal(dram_para_t *para)
 	clrsetbits_le32((SYS_CONTROL_REG_BASE + LDO_CTAL_REG), 0xff00, reg << 8);
 }
 
-static void dram_voltage_set(dram_para_t *para)
-{
+static void dram_voltage_set(dram_para_t *para) {
 	int vol;
 
 	switch (para->dram_type) {
@@ -104,16 +100,14 @@ static void dram_voltage_set(dram_para_t *para)
 	sid_read_ldoB_cal(para);
 }
 
-static void dram_enable_all_master(void)
-{
+static void dram_enable_all_master(void) {
 	writel(~0, (MCTL_COM_BASE + MCTL_COM_MAER0));
 	writel(0xff, (MCTL_COM_BASE + MCTL_COM_MAER1));
 	writel(0xffff, (MCTL_COM_BASE + MCTL_COM_MAER2));
 	udelay(10);
 }
 
-static void dram_disable_all_master(void)
-{
+static void dram_disable_all_master(void) {
 	writel(1, (MCTL_COM_BASE + MCTL_COM_MAER0));
 	writel(0, (MCTL_COM_BASE + MCTL_COM_MAER1));
 	writel(0, (MCTL_COM_BASE + MCTL_COM_MAER2));
@@ -143,13 +137,13 @@ static void eye_delay_compensation(dram_para_t *para) // s1
 	// DQS0 read and write delay
 	delay = (para->dram_tpr11 & 0xf0000) >> 7;
 	delay |= (para->dram_tpr12 & 0xf0000) >> 15;
-	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX0IOCR(9)), delay); // DQS0 P
+	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX0IOCR(9)), delay);  // DQS0 P
 	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX0IOCR(10)), delay); // DQS0 N
 
 	// DQS1 read and write delay
 	delay = (para->dram_tpr11 & 0xf00000) >> 11;
 	delay |= (para->dram_tpr12 & 0xf00000) >> 19;
-	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX1IOCR(9)), delay); // DQS1 P
+	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX1IOCR(9)), delay);  // DQS1 P
 	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_DATX1IOCR(10)), delay); // DQS1 N
 
 	// DQS0 enable bit delay
@@ -180,8 +174,7 @@ static void eye_delay_compensation(dram_para_t *para) // s1
  * timing settings for the specific type of sdram used. Read together with
  * an sdram datasheet for context on the various variables.
  */
-static void mctl_set_timing_params(dram_para_t *para)
-{
+static void mctl_set_timing_params(dram_para_t *para) {
 	/* DRAM_TPR0 */
 	u8 tccd = 2;
 	u8 tfaw;
@@ -322,10 +315,10 @@ static void mctl_set_timing_params(dram_para_t *para)
 			//		trd2wr		= tcwl + 2 + twr;		// WL+BL/2+tWR
 			twr2rd = tcwl + twtr; // WL+tWTR
 
-			tdinit0 = 500 * para->dram_clk + 1; // 500 us
+			tdinit0 = 500 * para->dram_clk + 1;		   // 500 us
 			tdinit1 = 360 * para->dram_clk / 1000 + 1; // 360 ns
-			tdinit2 = 200 * para->dram_clk + 1; // 200 us
-			tdinit3 = 1 * para->dram_clk + 1; //   1 us
+			tdinit2 = 200 * para->dram_clk + 1;		   // 200 us
+			tdinit3 = 1 * para->dram_clk + 1;		   //   1 us
 
 			mr1	   = para->dram_mr1;
 			mr3	   = 0;
@@ -444,28 +437,28 @@ static void mctl_set_timing_params(dram_para_t *para)
 			trcd  = 6;
 			trrd  = 3;
 
-			twr2rd	   = 8; // 48(sp)
-			tcksrx	   = 4; // t1
-			tckesr	   = 3; // t4
-			trd2wr	   = 4; // t6
+			twr2rd	   = 8;	 // 48(sp)
+			tcksrx	   = 4;	 // t1
+			tckesr	   = 3;	 // t4
+			trd2wr	   = 4;	 // t6
 			trasmax	   = 27; // t3
 			twtp	   = 12; // s6
-			tcke	   = 2; // s8
-			tmod	   = 6; // t0
-			tmrd	   = 2; // t5
-			tmrw	   = 0; // a1
-			tcwl	   = 3; // a5
-			tcl		   = 3; // a0
-			wr_latency = 1; // a7
-			t_rdata_en = 1; // a4
-			mr3		   = 0; // s0
-			mr2		   = 0; // t2
-			mr1		   = 0; // s1
-			mr0		   = 0; // a3
-			tdinit3	   = 0; // 40(sp)
-			tdinit2	   = 0; // 32(sp)
-			tdinit1	   = 0; // 24(sp)
-			tdinit0	   = 0; // 16(sp)
+			tcke	   = 2;	 // s8
+			tmod	   = 6;	 // t0
+			tmrd	   = 2;	 // t5
+			tmrw	   = 0;	 // a1
+			tcwl	   = 3;	 // a5
+			tcl		   = 3;	 // a0
+			wr_latency = 1;	 // a7
+			t_rdata_en = 1;	 // a4
+			mr3		   = 0;	 // s0
+			mr2		   = 0;	 // t2
+			mr1		   = 0;	 // s1
+			mr0		   = 0;	 // a3
+			tdinit3	   = 0;	 // 40(sp)
+			tdinit2	   = 0;	 // 32(sp)
+			tdinit1	   = 0;	 // 24(sp)
+			tdinit0	   = 0;	 // 16(sp)
 
 			break;
 	}
@@ -502,8 +495,7 @@ static void mctl_set_timing_params(dram_para_t *para)
 // Purpose of this routine seems to be to initialize the PLL driving
 // the MBUS and sdram.
 //
-static int ccu_set_pll_ddr_clk(int index, dram_para_t *para)
-{
+static int ccu_set_pll_ddr_clk(int index, dram_para_t *para) {
 	unsigned int val, clk, n;
 
 	if (para->dram_tpr13 & (1 << 6))
@@ -515,9 +507,9 @@ static int ccu_set_pll_ddr_clk(int index, dram_para_t *para)
 	n = (clk * 2) / 24;
 
 	val = readl((CCU_BASE + CCU_PLL_DDR_CTRL_REG));
-	val &= 0xfff800fc; // clear dividers
+	val &= 0xfff800fc;	 // clear dividers
 	val |= (n - 1) << 8; // set PLL division
-	val |= 0xc0000000; // enable PLL and LDO
+	val |= 0xc0000000;	 // enable PLL and LDO
 	val &= 0xdfffffff;
 	writel(val | 0x20000000, (CCU_BASE + CCU_PLL_DDR_CTRL_REG));
 
@@ -545,8 +537,7 @@ static int ccu_set_pll_ddr_clk(int index, dram_para_t *para)
 // Main purpose of sys_init seems to be to initalise the clocks for
 // the sdram controller.
 //
-static void mctl_sys_init(dram_para_t *para)
-{
+static void mctl_sys_init(dram_para_t *para) {
 	// assert MBUS reset
 	clrbits_le32((CCU_BASE + CCU_MBUS_CLK_REG), (1 << 30));
 
@@ -585,20 +576,19 @@ static void mctl_sys_init(dram_para_t *para)
 // from the dram_para1 and dram_para2 fields to the PHY configuration registers
 // (MCTL_COM_WORK_MODE0, MCTL_COM_WORK_MODE1).
 //
-static void mctl_com_init(dram_para_t *para)
-{
-	uint32_t	  val, width;
+static void mctl_com_init(dram_para_t *para) {
+	uint32_t val, width;
 	unsigned long ptr;
-	int			  i;
+	int i;
 
 	// Setting controller wait time
 	clrsetbits_le32((MCTL_COM_BASE + MCTL_COM_DBGCR), 0x3f00, 0x2000);
 
 	// set SDRAM type and word width
 	val = readl((MCTL_COM_BASE + MCTL_COM_WORK_MODE0)) & ~0x00fff000;
-	val |= (para->dram_type & 0x7) << 16; // DRAM type
+	val |= (para->dram_type & 0x7) << 16;	// DRAM type
 	val |= (~para->dram_para2 & 0x1) << 12; // DQ width
-	val |= (1 << 22); // ??
+	val |= (1 << 22);						// ??
 	if (para->dram_type == SUNXI_DRAM_TYPE_LPDDR2 || para->dram_type == SUNXI_DRAM_TYPE_LPDDR3) {
 		val |= (1 << 19); // type 6 and 7 must use 1T
 	} else {
@@ -617,8 +607,8 @@ static void mctl_com_init(dram_para_t *para)
 	for (i = 0; i < width; i += 16) {
 		val = readl(ptr) & 0xfffff000;
 
-		val |= (para->dram_para2 >> 12) & 0x3; // rank
-		val |= ((para->dram_para1 >> (i + 12)) << 2) & 0x4; // bank - 2
+		val |= (para->dram_para2 >> 12) & 0x3;					  // rank
+		val |= ((para->dram_para1 >> (i + 12)) << 2) & 0x4;		  // bank - 2
 		val |= (((para->dram_para1 >> (i + 4)) - 1) << 4) & 0xff; // row - 1
 
 		// convert from page size to column addr width - 3
@@ -659,27 +649,27 @@ static void mctl_com_init(dram_para_t *para)
 }
 
 static const uint8_t ac_remapping_tables[][22] = {
-	[0] = {  0	},
- /* FPGA Verify DDR REMAP */
-	[1] = { 0x1,	0x9, 0x3, 0x7, 0x8, 0x12,	  0x4, 0xD,  0x5, 0x6,	 0xA,
-		   0x2, 0xE,	 0xC, 0x0,  0x0, 0x15, 0x11, 0x14, 0x13,	0xB, 0x16}, // Generic DDR3 Type1
-	[2] = { 0x4,	0x9, 0x3, 0x7, 0x8, 0x12,	  0x1, 0xD,  0x2, 0x6,	 0xA,
-		   0x5, 0xE,	 0xC, 0x0,  0x0, 0x15, 0x11, 0x14, 0x13,	0xB, 0x16}, // Generic DDR3 Type C
-	[3] = { 0x1,	0x7, 0x8, 0xC, 0xA, 0x12,	  0x4, 0xD,  0x5, 0x6,	 0x3,
-		   0x2, 0x9,	 0x0, 0x0,  0x0, 0x15, 0x11, 0x14, 0x13,	0xB, 0x16}, // Generic DDR3 Type 8
-	[4] = { 0x4,	0xC, 0xA, 0x7, 0x8, 0x12,	  0x1, 0xD,  0x2, 0x6,	 0x3,
-		   0x5, 0x9,	 0x0, 0x0,  0x0, 0x15, 0x11, 0x14, 0x13,	0xB, 0x16}, // Generic DDR3 Type 9
-	[5] = { 0xD,	0x2, 0x7, 0x9, 0xC, 0x13,	  0x5, 0x1,  0x6, 0x3,	 0x4,
-		   0x8, 0xA,	 0x0, 0x0,  0x0, 0x15, 0x16, 0x12, 0x11,	0xB, 0x14}, // Generic DDR3 Type bf
+	[0] = {0},
+	/* FPGA Verify DDR REMAP */
+	[1] = {0x1, 0x9, 0x3, 0x7, 0x8, 0x12, 0x4,	0xD,  0x5,	0x6, 0xA,
+		   0x2, 0xE, 0xC, 0x0, 0x0, 0x15, 0x11, 0x14, 0x13, 0xB, 0x16}, // Generic DDR3 Type1
+	[2] = {0x4, 0x9, 0x3, 0x7, 0x8, 0x12, 0x1,	0xD,  0x2,	0x6, 0xA,
+		   0x5, 0xE, 0xC, 0x0, 0x0, 0x15, 0x11, 0x14, 0x13, 0xB, 0x16}, // Generic DDR3 Type C
+	[3] = {0x1, 0x7, 0x8, 0xC, 0xA, 0x12, 0x4,	0xD,  0x5,	0x6, 0x3,
+		   0x2, 0x9, 0x0, 0x0, 0x0, 0x15, 0x11, 0x14, 0x13, 0xB, 0x16}, // Generic DDR3 Type 8
+	[4] = {0x4, 0xC, 0xA, 0x7, 0x8, 0x12, 0x1,	0xD,  0x2,	0x6, 0x3,
+		   0x5, 0x9, 0x0, 0x0, 0x0, 0x15, 0x11, 0x14, 0x13, 0xB, 0x16}, // Generic DDR3 Type 9
+	[5] = {0xD, 0x2, 0x7, 0x9, 0xC, 0x13, 0x5,	0x1,  0x6,	0x3, 0x4,
+		   0x8, 0xA, 0x0, 0x0, 0x0, 0x15, 0x16, 0x12, 0x11, 0xB, 0x14}, // Generic DDR3 Type bf
 	/* ASIC Chip */
-	[6] = { 0x3,	0xA, 0x7, 0xD, 0x9,	0xB,  0x1, 0x2,	 0x4, 0x6, 0x8,
-		   0x5, 0xC,	 0x0, 0x0,  0x0, 0x14, 0x12,	0x0, 0x15, 0x16, 0x11}, // DDR2
-	[7] = { 0x3, 0x2, 0x4, 0x7, 0x9,	0x1, 0x11,	0xC, 0x12,	0xE, 0xD,
-		   0x8, 0xF,	 0x6, 0xA,  0x5, 0x13, 0x16, 0x10, 0x15, 0x14, 0xB}, // DDR3 D1-H
-	[8] = { 0x2,	0x13, 0x8, 0x6, 0xE,	 0x5, 0x14,	 0xA,  0x3, 0x12,  0xD,
-		   0xB, 0x7, 0xF, 0x9,	0x1, 0x16, 0x15, 0x11,  0xC,	0x4,  0x10}, // DDR3 H133
-	[9] = { 0x1,	 0x2, 0xD, 0x8, 0xF, 0xC, 0x13,  0xA,   0x3, 0x15,  0x6,
-		   0x11, 0x9,  0xE, 0x5, 0x10, 0x14, 0x16,  0xB,  0x7,	0x4,  0x12}, // DDR2 H133
+	[6] = {0x3, 0xA, 0x7, 0xD, 0x9, 0xB,  0x1,	0x2, 0x4,  0x6,	 0x8,
+		   0x5, 0xC, 0x0, 0x0, 0x0, 0x14, 0x12, 0x0, 0x15, 0x16, 0x11}, // DDR2
+	[7] = {0x3, 0x2, 0x4, 0x7, 0x9, 0x1,  0x11, 0xC,  0x12, 0xE,  0xD,
+		   0x8, 0xF, 0x6, 0xA, 0x5, 0x13, 0x16, 0x10, 0x15, 0x14, 0xB}, // DDR3 D1-H
+	[8] = {0x2, 0x13, 0x8, 0x6, 0xE, 0x5,  0x14, 0xA,  0x3, 0x12, 0xD,
+		   0xB, 0x7,  0xF, 0x9, 0x1, 0x16, 0x15, 0x11, 0xC, 0x4,  0x10}, // DDR3 H133
+	[9] = {0x1,	 0x2, 0xD, 0x8, 0xF,  0xC,	0x13, 0xA, 0x3, 0x15, 0x6,
+		   0x11, 0x9, 0xE, 0x5, 0x10, 0x14, 0x16, 0xB, 0x7, 0x4,  0x12}, // DDR2 H133
 };
 
 /*
@@ -687,10 +677,9 @@ static const uint8_t ac_remapping_tables[][22] = {
  * It is unclear which lines are being remapped. It seems to pick
  * table cfg7 for the Nezha board.
  */
-static void mctl_phy_ac_remapping(dram_para_t *para)
-{
+static void mctl_phy_ac_remapping(dram_para_t *para) {
 	const uint8_t *cfg;
-	uint32_t	   fuse, val, chipid;
+	uint32_t fuse, val, chipid;
 
 	/*
 	 * It is unclear whether the LPDDRx types don't need any remapping,
@@ -763,8 +752,7 @@ static void mctl_phy_ac_remapping(dram_para_t *para)
 // Init the controller channel. The key part is placing commands in the main
 // command register (PIR, 0x3103000) and checking command status (PGSR0, 0x3103010).
 //
-static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
-{
+static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para) {
 	unsigned int val, dqs_gating_mode;
 
 	dqs_gating_mode = (para->dram_tpr13 & 0xc) >> 2;
@@ -822,8 +810,11 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 			clrsetbits_le32((MCTL_PHY_BASE + MCTL_PHY_DXCCR), 0x77000000, 0x22000000);
 	}
 
-	clrsetbits_le32((MCTL_PHY_BASE + MCTL_PHY_DTCR), 0x0fffffff,
-					(para->dram_para2 & (1 << 12)) ? 0x03000001 : 0x01000007);
+	clrsetbits_le32(
+		(MCTL_PHY_BASE + MCTL_PHY_DTCR),
+		0x0fffffff,
+		(para->dram_para2 & (1 << 12)) ? 0x03000001 : 0x01000007
+	);
 
 	if (readl((SUNXI_R_CPUCFG_BASE + SUNXI_R_CPUCFG_SUP_STAN_FLAG)) & (1 << 16)) {
 		clrbits_le32((R_PRCM_BASE + VDD_SYS_PWROFF_GATING_REG), 0x2);
@@ -839,8 +830,7 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 		// + z-cal
 		writel(0x53, (MCTL_PHY_BASE + MCTL_PHY_PIR)); // Go
 
-		while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {
-		} // wait for IDONE
+		while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {} // wait for IDONE
 		udelay(10);
 
 		// 0x520 = prep DQS gating + DRAM init + d-cal
@@ -864,8 +854,7 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_PIR), 0x1); // GO
 
 	udelay(10);
-	while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {
-	} // wait for IDONE
+	while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {} // wait for IDONE
 
 	if (readl((SUNXI_R_CPUCFG_BASE + SUNXI_R_CPUCFG_SUP_STAN_FLAG)) & (1 << 16)) {
 		clrsetbits_le32((MCTL_PHY_BASE + MCTL_PHY_PGCR3), 0x06000000, 0x04000000);
@@ -873,16 +862,14 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 
 		setbits_le32((MCTL_PHY_BASE + MCTL_PHY_PWRCTL), 0x1);
 
-		while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x7) != 0x3) {
-		}
+		while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x7) != 0x3) {}
 
 		clrbits_le32((R_PRCM_BASE + VDD_SYS_PWROFF_GATING_REG), 0x1);
 		udelay(10);
 
 		clrbits_le32((MCTL_PHY_BASE + MCTL_PHY_PWRCTL), 0x1);
 
-		while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x7) != 0x1) {
-		}
+		while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x7) != 0x1) {}
 
 		udelay(15);
 
@@ -892,8 +879,7 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 			udelay(1);
 			writel(0x401, (MCTL_PHY_BASE + MCTL_PHY_PIR));
 
-			while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {
-			}
+			while ((readl((MCTL_PHY_BASE + MCTL_PHY_PGSR0)) & 0x1) == 0) {}
 		}
 	}
 
@@ -904,8 +890,7 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 	}
 
 	// STATR = Zynq STAT? Wait for status 'normal'?
-	while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x1) == 0) {
-	}
+	while ((readl((MCTL_PHY_BASE + MCTL_PHY_STATR)) & 0x1) == 0) {}
 
 	setbits_le32((MCTL_PHY_BASE + MCTL_PHY_RFSHCTL0), (1 << 31));
 	udelay(10);
@@ -922,14 +907,13 @@ static unsigned int mctl_channel_init(unsigned int ch_index, dram_para_t *para)
 	return 1;
 }
 
-static unsigned int calculate_rank_size(uint32_t regval)
-{
+static unsigned int calculate_rank_size(uint32_t regval) {
 	unsigned int bits;
 
-	bits = (regval >> 8) & 0xf; /* page size - 3 */
+	bits = (regval >> 8) & 0xf;	 /* page size - 3 */
 	bits += (regval >> 4) & 0xf; /* row width - 1 */
 	bits += (regval >> 2) & 0x3; /* bank count - 2 */
-	bits -= 14; /* 1MB = 20 bits, minus above 6 = 14 */
+	bits -= 14;					 /* 1MB = 20 bits, minus above 6 = 14 */
 
 	return 1U << bits;
 }
@@ -939,9 +923,8 @@ static unsigned int calculate_rank_size(uint32_t regval)
  * the number of address bits in each rank available. It then calculates
  * total memory size in MB.
  */
-static unsigned int DRAMC_get_dram_size(void)
-{
-	uint32_t	 val;
+static unsigned int DRAMC_get_dram_size(void) {
+	uint32_t val;
 	unsigned int size;
 
 	val	 = readl((MCTL_COM_BASE + MCTL_COM_WORK_MODE0)); /* MCTL_COM_WORK_MODE0 */
@@ -951,7 +934,7 @@ static unsigned int DRAMC_get_dram_size(void)
 		return size;
 
 	val = readl((MCTL_COM_BASE + MCTL_COM_WORK_MODE1)); /* MCTL_WORK_MODE1 */
-	if ((val & 0x3) == 0) /* two identical ranks? */
+	if ((val & 0x3) == 0)								/* two identical ranks? */
 		return size * 2;
 
 	/* add sizes of both ranks */
@@ -965,8 +948,7 @@ static unsigned int DRAMC_get_dram_size(void)
  * If there was an error, figure out whether it was half DQ, single rank,
  * or both. Set bit 12 and 0 in dram_para2 with the results.
  */
-static int dqs_gate_detect(dram_para_t *para)
-{
+static int dqs_gate_detect(dram_para_t *para) {
 	uint32_t dx0 = 0, dx1 = 0;
 
 	if ((readl(MCTL_PHY_BASE + MCTL_PHY_PGSR0) & BIT(22)) == 0) {
@@ -1006,11 +988,10 @@ static int dqs_gate_detect(dram_para_t *para)
 	return 0;
 }
 
-static int dramc_simple_wr_test(unsigned int mem_mb, int len)
-{
-	unsigned int  offs	= (mem_mb / 2) << 18; // half of memory size
-	unsigned int  patt1 = 0x01234567;
-	unsigned int  patt2 = 0xfedcba98;
+static int dramc_simple_wr_test(unsigned int mem_mb, int len) {
+	unsigned int offs  = (mem_mb / 2) << 18; // half of memory size
+	unsigned int patt1 = 0x01234567;
+	unsigned int patt2 = 0xfedcba98;
 	unsigned int *addr, v1, v2, i;
 
 	addr = (unsigned int *)CONFIG_SYS_SDRAM_BASE;
@@ -1043,8 +1024,7 @@ static int dramc_simple_wr_test(unsigned int mem_mb, int len)
 
 // Set the Vref mode for the controller
 //
-static void mctl_vrefzq_init(dram_para_t *para)
-{
+static void mctl_vrefzq_init(dram_para_t *para) {
 	if (para->dram_tpr13 & (1 << 17))
 		return;
 
@@ -1060,8 +1040,7 @@ static void mctl_vrefzq_init(dram_para_t *para)
 // establish the actual ram size. The third time is final one, with the final
 // settings.
 //
-static int mctl_core_init(dram_para_t *para)
-{
+static int mctl_core_init(dram_para_t *para) {
 	mctl_sys_init(para);
 
 	mctl_vrefzq_init(para);
@@ -1086,13 +1065,12 @@ static int mctl_core_init(dram_para_t *para)
  * BA0-1 and row addresses. Finally, the column address is allocated 13 lines
  * and these are tested. The results are placed in dram_para1 and dram_para2.
  */
-static int auto_scan_dram_size(dram_para_t *para)
-{
-	uint32_t	  i = 0, j = 0, current_rank = 0;
-	uint32_t	  rank_count = 1, addr_line = 0;
-	uint32_t	  reg_val = 0, ret = 0, cnt = 0;
+static int auto_scan_dram_size(dram_para_t *para) {
+	uint32_t i = 0, j = 0, current_rank = 0;
+	uint32_t rank_count = 1, addr_line = 0;
+	uint32_t reg_val = 0, ret = 0, cnt = 0;
 	unsigned long mc_work_mode;
-	uint32_t	  rank1_addr = CONFIG_SYS_SDRAM_BASE;
+	uint32_t rank1_addr = CONFIG_SYS_SDRAM_BASE;
 
 	// init core
 	if (mctl_core_init(para) == 0) {
@@ -1117,8 +1095,10 @@ static int auto_scan_dram_size(dram_para_t *para)
 
 		/* write test pattern */
 		for (i = 0; i < 64; i++) {
-			writel((i % 2) ? (CONFIG_SYS_SDRAM_BASE + 4 * i) : (~(CONFIG_SYS_SDRAM_BASE + 4 * i)),
-				   CONFIG_SYS_SDRAM_BASE + 4 * i);
+			writel(
+				(i % 2) ? (CONFIG_SYS_SDRAM_BASE + 4 * i) : (~(CONFIG_SYS_SDRAM_BASE + 4 * i)),
+				CONFIG_SYS_SDRAM_BASE + 4 * i
+			);
 		}
 		/* set row mode */
 		clrsetbits_le32(mc_work_mode, 0xf0c, 0x6f0);
@@ -1247,8 +1227,7 @@ static int auto_scan_dram_size(dram_para_t *para)
  * full or half DQ width. It then resets the parameters to the original values.
  * dram_para2 is updated with the rank and width findings.
  */
-static int auto_scan_dram_rank_width(dram_para_t *para)
-{
+static int auto_scan_dram_rank_width(dram_para_t *para) {
 	unsigned int s1 = para->dram_tpr13;
 	unsigned int s2 = para->dram_para1;
 
@@ -1278,8 +1257,7 @@ static int auto_scan_dram_rank_width(dram_para_t *para)
  * the size of each rank. It then updates dram_tpr13 to reflect that the sizes
  * are now known: a re-init will not repeat the autoscan.
  */
-static int auto_scan_dram_config(dram_para_t *para)
-{
+static int auto_scan_dram_config(dram_para_t *para) {
 	if (((para->dram_tpr13 & BIT(14)) == 0) && (auto_scan_dram_rank_width(para) == 0)) {
 		printf("ERROR: auto scan dram rank & width failed\r\n");
 		return 0;
@@ -1296,8 +1274,7 @@ static int auto_scan_dram_config(dram_para_t *para)
 	return 1;
 }
 
-int init_DRAM(int type, dram_para_t *para)
-{
+int init_DRAM(int type, dram_para_t *para) {
 	u32 rc, mem_size_mb;
 
 	debug("DRAM BOOT DRIVE INFO: %s\r\n", "V0.24");
@@ -1411,8 +1388,7 @@ int init_DRAM(int type, dram_para_t *para)
 	return mem_size_mb;
 }
 
-unsigned long sunxi_dram_init(void)
-{
+unsigned long sunxi_dram_init(void) {
 	dram_para_t para = {
 		.dram_clk	 = CONFIG_DRAM_CLK,
 		.dram_type	 = CONFIG_SUNXI_DRAM_TYPE,

@@ -6,14 +6,14 @@ extern "C" {
 #endif
 
 #include <types.h>
+
 #include <barrier.h>
 #include <irqflags.h>
 
 #if (__ARM32_ARCH__ >= 6)
-static inline void atomic_add(atomic_t *a, int v)
-{
+static inline void atomic_add(atomic_t *a, int v) {
 	unsigned int tmp;
-	int			 result;
+	int result;
 
 	__asm__ __volatile__("1:	ldrex %0, [%3]\n"
 						 "	add	%0, %0, %4\n"
@@ -25,10 +25,9 @@ static inline void atomic_add(atomic_t *a, int v)
 						 : "cc");
 }
 
-static inline int atomic_add_return(atomic_t *a, int v)
-{
+static inline int atomic_add_return(atomic_t *a, int v) {
 	unsigned int tmp;
-	int			 result;
+	int result;
 
 	__asm__ __volatile__("1:	ldrex %0, [%3]\n"
 						 "	add	%0, %0, %4\n"
@@ -42,10 +41,9 @@ static inline int atomic_add_return(atomic_t *a, int v)
 	return result;
 }
 
-static inline void atomic_sub(atomic_t *a, int v)
-{
+static inline void atomic_sub(atomic_t *a, int v) {
 	unsigned int tmp;
-	int			 result;
+	int result;
 
 	__asm__ __volatile__("1:	ldrex %0, [%3]\n"
 						 "	sub	%0, %0, %4\n"
@@ -57,10 +55,9 @@ static inline void atomic_sub(atomic_t *a, int v)
 						 : "cc");
 }
 
-static inline int atomic_sub_return(atomic_t *a, int v)
-{
+static inline int atomic_sub_return(atomic_t *a, int v) {
 	unsigned int tmp;
-	int			 result;
+	int result;
 
 	__asm__ __volatile__("1:	ldrex %0, [%3]\n"
 						 "	sub	%0, %0, %4\n"
@@ -74,8 +71,7 @@ static inline int atomic_sub_return(atomic_t *a, int v)
 	return result;
 }
 
-static inline int atomic_cmp_exchange(atomic_t *a, int o, int n)
-{
+static inline int atomic_cmp_exchange(atomic_t *a, int o, int n) {
 	int pre, res;
 
 	do {
@@ -91,38 +87,33 @@ static inline int atomic_cmp_exchange(atomic_t *a, int o, int n)
 	return pre;
 }
 #else
-static inline void atomic_add(atomic_t *a, int v)
-{
+static inline void atomic_add(atomic_t *a, int v) {
 	mb();
 	a->counter += v;
 	mb();
 }
 
-static inline int atomic_add_return(atomic_t *a, int v)
-{
+static inline int atomic_add_return(atomic_t *a, int v) {
 	mb();
 	a->counter += v;
 	mb();
 	return a->counter;
 }
 
-static inline void atomic_sub(atomic_t *a, int v)
-{
+static inline void atomic_sub(atomic_t *a, int v) {
 	mb();
 	a->counter -= v;
 	mb();
 }
 
-static inline int atomic_sub_return(atomic_t *a, int v)
-{
+static inline int atomic_sub_return(atomic_t *a, int v) {
 	mb();
 	a->counter -= v;
 	mb();
 	return a->counter;
 }
 
-static inline int atomic_cmp_exchange(atomic_t *a, int o, int n)
-{
+static inline int atomic_cmp_exchange(atomic_t *a, int o, int n) {
 	volatile int v;
 
 	mb();

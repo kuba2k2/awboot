@@ -12,38 +12,38 @@ typedef unsigned short umode_t;
  */
 
 typedef __signed__ char __s8;
-typedef unsigned char	__u8;
+typedef unsigned char __u8;
 
 typedef __signed__ short __s16;
-typedef unsigned short	 __u16;
+typedef unsigned short __u16;
 
 typedef __signed__ int __s32;
-typedef unsigned int   __u32;
+typedef unsigned int __u32;
 
 #if defined(__GNUC__)
 __extension__ typedef __signed__ long long __s64;
-__extension__ typedef unsigned long long   __u64;
+__extension__ typedef unsigned long long __u64;
 #endif
 
 /*
  * These aren't exported outside the kernel to avoid name space clashes
  */
-//#ifdef __KERNEL__
+// #ifdef __KERNEL__
 
-typedef signed char	  s8;
+typedef signed char s8;
 typedef unsigned char u8;
 
-typedef signed short   s16;
+typedef signed short s16;
 typedef unsigned short u16;
 
 /* dont mix stdint and basic types, uint32_t and u32 are intermixed throughout code */
-typedef int32_t	 s32;
+typedef int32_t s32;
 typedef uint32_t u32;
 
-typedef signed long long   s64;
+typedef signed long long s64;
 typedef unsigned long long u64;
 
-typedef float  f32;
+typedef float f32;
 typedef double f64;
 
 #ifdef CONFIG_ARM64
@@ -73,9 +73,9 @@ typedef unsigned long phys_size_t;
 #ifdef CONFIG_DMA_ADDR_T_64BIT
 typedef unsigned long long dma_addr_t;
 #else
-typedef u32			  dma_addr_t;
+typedef u32 dma_addr_t;
 #endif
 
-//#endif /* __KERNEL__ */
+// #endif /* __KERNEL__ */
 
 #endif

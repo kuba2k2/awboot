@@ -1,6 +1,8 @@
 #ifndef __IRQ_H__
 #define __IRQ_H__
 
+#include <stdint.h>
+
 typedef void (*irq_handler_t)(void *arg);
 
 extern void gic400_init();

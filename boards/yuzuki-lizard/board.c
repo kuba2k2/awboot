@@ -1,12 +1,13 @@
-#include "main.h"
 #include "board.h"
-#include "sunxi_gpio.h"
-#include "sunxi_sdhci.h"
-#include "sunxi_usart.h"
-#include "sunxi_spi.h"
-#include "sunxi_irq.h"
+#include "main.h"
+
 #include "irq.h"
 #include "sdmmc.h"
+#include "sunxi_gpio.h"
+#include "sunxi_irq.h"
+#include "sunxi_sdhci.h"
+#include "sunxi_spi.h"
+#include "sunxi_usart.h"
 
 sunxi_usart_t usart_dbg = {
 	.base	 = 0x02500800,
@@ -47,20 +48,17 @@ sdhci_t sdhci0 = {
 
 static gpio_t led_blue = GPIO_PIN(PORTF, 6);
 
-void board_init_led(gpio_t led)
-{
+void board_init_led(gpio_t led) {
 	sunxi_gpio_init(led, GPIO_OUTPUT);
 	sunxi_gpio_set_value(led, 0);
 }
 
-int board_sdhci_init()
-{
+int board_sdhci_init() {
 	sunxi_sdhci_init(&sdhci0);
 	return sdmmc_init(&card0, &sdhci0);
 }
 
-void board_init()
-{
+void board_init() {
 	board_init_led(led_blue);
 #ifdef CONFIG_ENABLE_CONSOLE
 	gic400_init();

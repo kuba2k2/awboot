@@ -1,9 +1,10 @@
-#include "console.h"
+#include "main.h"
+
 #include "board.h"
+#include "console.h"
 #include "debug.h"
 #include "strtok.h"
 #include "sunxi_usart.h"
-#include "main.h"
 
 extern uint32_t get_sys_ticks(void);
 
@@ -13,21 +14,19 @@ static void cmd_echo(unsigned char argc, char **argv);
 
 const cmd_t cmd_tbl[] = {
 	{"echo", cmd_echo},
-	{	 NULL,	   NULL}
+	{NULL,   NULL	   }
 };
 
 uint32_t get_sys_ticks(void);
 
-static void cmd_menu()
-{
+static void cmd_menu() {
 	message("awboot> ");
 }
 
-static int8_t cmd_parse(char *cmd)
-{
+static int8_t cmd_parse(char *cmd) {
 	unsigned char argc, i = 0;
-	char		 *argv[CONSOLE_ARGS_MAX];
-	char		 *last;
+	char *argv[CONSOLE_ARGS_MAX];
+	char *last;
 
 	argv[i] = strtok_r(cmd, " ", &last);
 
@@ -52,8 +51,7 @@ static int8_t cmd_parse(char *cmd)
 	return -1;
 }
 
-void console_init(sunxi_usart_t *usart)
-{
+void console_init(sunxi_usart_t *usart) {
 	console.cmd_ptr = console.cmd;
 	console.usart	= usart;
 
@@ -61,9 +59,8 @@ void console_init(sunxi_usart_t *usart)
 	cmd_menu();
 }
 
-void console_handler(uint32_t timeout)
-{
-	char	 ch;
+void console_handler(uint32_t timeout) {
+	char ch;
 	uint32_t tmo = get_sys_ticks();
 
 	while (1) {
@@ -120,7 +117,6 @@ void console_handler(uint32_t timeout)
 	}
 }
 
-static void cmd_echo(unsigned char argc, char **argv)
-{
+static void cmd_echo(unsigned char argc, char **argv) {
 	message("%s\r\n", argv[1]);
 }

@@ -251,7 +251,8 @@ static const unsigned char formatStates[] = {
 	0x45, 0x45, 0x05, 0x05, 0x05, 0x05, 0x35, 0x30, 0x00, 0x50, 0x60, 0x00, 0x00, 0x00, 0x20, 0x28, 0x38, 0x50, 0x50,
 	0x00, 0x00, 0x00, 0x30, 0x30, 0x30, 0x50, 0x50, 0x00, 0x00, 0x08, 0x20, 0x20, 0x28, 0x20, 0x20, 0x20, 0x00, 0x08,
 	0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x00, 0x00, 0x70, 0x78, 0x78, 0x78, 0x70, 0x78, 0x00, 0x07, 0x08, 0x00, 0x00,
-	0x07, 0x00, 0x00, 0x08, 0x08, 0x00, 0x00, 0x08, 0x00, 0x08, 0x00, 0x00, 0x08, 0x00, 0x07};
+	0x07, 0x00, 0x00, 0x08, 0x08, 0x00, 0x00, 0x08, 0x00, 0x08, 0x00, 0x00, 0x08, 0x00, 0x07
+};
 
 /**
  * Convert an unsigned value in one string
@@ -264,8 +265,7 @@ static const unsigned char formatStates[] = {
  *
  * @param out		- Buffer with the converted value.
  */
-static void ulong2a(struct param_s *param)
-{
+static void ulong2a(struct param_s *param) {
 	unsigned char digit;
 
 	while (param->prec-- > 0 || param->values.lvalue) {
@@ -303,8 +303,7 @@ static void ulong2a(struct param_s *param)
 #ifdef XCFG_FORMAT_LONG_ARE_LONGLONG
 #define ullong2a ulong2a
 #else
-static void ullong2a(struct param_s *param)
-{
+static void ullong2a(struct param_s *param) {
 	unsigned char digit;
 
 	while (param->prec-- > 0 || param->values.llvalue) {
@@ -351,9 +350,8 @@ static void ullong2a(struct param_s *param)
  *
  * @see xvformat
  */
-unsigned xformat(void (*outchar)(void *, char), void *arg, const char *fmt, ...)
-{
-	va_list	 list;
+unsigned xformat(void (*outchar)(void *, char), void *arg, const char *fmt, ...) {
+	va_list list;
 	unsigned count;
 
 	va_start(list, fmt);
@@ -371,21 +369,24 @@ unsigned xformat(void (*outchar)(void *, char), void *arg, const char *fmt, ...)
  * @param s - C	 string
  * @return The length of the string
  */
-static unsigned xstrlen(const char *s)
-{
+static unsigned xstrlen(const char *s) {
 	const char *i;
 
-	for (i = s; *i; i++) {
-	}
+	for (i = s; *i; i++) {}
 
 	return (unsigned)(i - s);
 }
 
-static unsigned outBuffer(void (*myoutchar)(void *arg, char), void *arg, const char *buffer, int len, unsigned toupper)
-{
+static unsigned outBuffer(
+	void (*myoutchar)(void *arg, char),
+	void *arg,
+	const char *buffer,
+	int len,
+	unsigned toupper
+) {
 	unsigned count = 0;
-	int		 i;
-	char	 c;
+	int i;
+	char c;
 
 	for (i = 0; i < len; i++) {
 		c = buffer[i];
@@ -401,8 +402,7 @@ static unsigned outBuffer(void (*myoutchar)(void *arg, char), void *arg, const c
 	return count;
 }
 
-static unsigned outChars(void (*myoutchar)(void *arg, char), void *arg, char ch, int len)
-{
+static unsigned outChars(void (*myoutchar)(void *arg, char), void *arg, char ch, int len) {
 	unsigned count = 0;
 
 	while (len-- > 0) {
@@ -464,11 +464,10 @@ static unsigned outChars(void (*myoutchar)(void *arg, char), void *arg, char ch,
  *
  * @return The number of char emitted.
  */
-unsigned xvformat(void (*outchar)(void *, char), void *arg, const char *fmt, va_list _args)
-{
+unsigned xvformat(void (*outchar)(void *, char), void *arg, const char *fmt, va_list _args) {
 	XCFG_FORMAT_STATIC struct param_s param;
-	int								  i;
-	char							  c;
+	int i;
+	char c;
 
 #if XCFG_FORMAT_VA_COPY
 	va_list args;

@@ -1,12 +1,12 @@
 #include "main.h"
+
 #include "board.h"
-#include "sunxi_clk.h"
+#include "debug.h"
 #include "reg-ccu.h"
 #include "sunxi_ccu.h"
-#include "debug.h"
+#include "sunxi_clk.h"
 
-void sunxi_clk_init(void)
-{
+void sunxi_clk_init(void) {
 	uint32_t val;
 
 	/* cpu_clk = CPU_PLL/P, AXI_DIV = 2 */
@@ -88,10 +88,9 @@ void sunxi_clk_init(void)
 	return;
 }
 
-uint32_t sunxi_clk_get_peri1x_rate()
-{
+uint32_t sunxi_clk_get_peri1x_rate() {
 	uint32_t reg32;
-	uint8_t	 plln, pllm, p0;
+	uint8_t plln, pllm, p0;
 
 	/* PLL PERI */
 	reg32 = read32(CCU_BASE + CCU_PLL_PERI_CTRL_REG);
@@ -106,8 +105,7 @@ uint32_t sunxi_clk_get_peri1x_rate()
 	return 0;
 }
 
-int spi_clk_init(sunxi_spi_t *spi)
-{
+int spi_clk_init(sunxi_spi_t *spi) {
 	uint32_t rval;
 
 	/* we use PERIPH_200M clock source */
@@ -125,13 +123,12 @@ int spi_clk_init(sunxi_spi_t *spi)
 }
 
 #ifdef CONFIG_ENABLE_CPU_FREQ_DUMP
-void sunxi_clk_dump()
-{
-	uint32_t				 reg32;
-	uint32_t				 cpu_clk_src;
-	uint32_t UNUSED_DEBUG	 plln, pllm;
-	uint8_t					 p0;
-	uint8_t UNUSED_DEBUG	 p1;
+void sunxi_clk_dump() {
+	uint32_t reg32;
+	uint32_t cpu_clk_src;
+	uint32_t UNUSED_DEBUG plln, pllm;
+	uint8_t p0;
+	uint8_t UNUSED_DEBUG p1;
 	const char UNUSED_DEBUG *clock_str;
 
 	/* PLL CPU */
@@ -179,8 +176,11 @@ void sunxi_clk_dump()
 		p1 = 1;
 	}
 
-	debug("CLK: CPU PLL=%s FREQ=%luMHz\r\n", clock_str,
-		  ((((read32(CCU_BASE + CCU_PLL_CPU_CTRL_REG) >> 8) & 0xff) + 1) * 24 / p1));
+	debug(
+		"CLK: CPU PLL=%s FREQ=%luMHz\r\n",
+		clock_str,
+		((((read32(CCU_BASE + CCU_PLL_CPU_CTRL_REG) >> 8) & 0xff) + 1) * 24 / p1)
+	);
 
 	/* PLL PERI */
 	reg32 = read32(CCU_BASE + CCU_PLL_PERI_CTRL_REG);
@@ -190,8 +190,12 @@ void sunxi_clk_dump()
 		p0	 = ((reg32 >> 16) & 0x03) + 1;
 		p1	 = ((reg32 >> 20) & 0x03) + 1;
 
-		debug("CLK: PLL_peri (2X)=%luMHz, (1X)=%luMHz, (800M)=%luMHz\r\n", (24 * plln) / (pllm * p0),
-			  (24 * plln) / (pllm * p0) >> 1, (24 * plln) / (pllm * p1));
+		debug(
+			"CLK: PLL_peri (2X)=%luMHz, (1X)=%luMHz, (800M)=%luMHz\r\n",
+			(24 * plln) / (pllm * p0),
+			(24 * plln) / (pllm * p0) >> 1,
+			(24 * plln) / (pllm * p1)
+		);
 	} else {
 		debug("CLK: PLL_peri disabled\r\n");
 	}

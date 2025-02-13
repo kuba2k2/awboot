@@ -154,7 +154,7 @@ typedef struct {
 	uint32_t rca;
 	uint32_t cid[4];
 	uint32_t csd[4];
-	uint8_t	 extcsd[512];
+	uint8_t extcsd[512];
 
 	uint32_t high_capacity;
 	uint32_t tran_speed;
@@ -165,15 +165,15 @@ typedef struct {
 } sdmmc_t;
 
 typedef struct {
-	sdmmc_t	 card;
+	sdmmc_t card;
 	sdhci_t *hci;
-	uint8_t	 buf[512];
-	bool	 online;
+	uint8_t buf[512];
+	bool online;
 } sdmmc_pdata_t;
 
 extern sdmmc_pdata_t card0;
 
-int		 sdmmc_init(sdmmc_pdata_t *data, sdhci_t *hci);
+int sdmmc_init(sdmmc_pdata_t *data, sdhci_t *hci);
 uint64_t sdmmc_blk_read(sdmmc_pdata_t *data, uint8_t *buf, uint64_t blkno, uint64_t blkcnt);
 
 #endif /* __SDCARD_H__ */

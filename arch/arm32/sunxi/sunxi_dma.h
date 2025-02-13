@@ -63,33 +63,33 @@
 #define DMA_QUEUE_END_INT (1 << 2)
 
 typedef struct {
-	u32 volatile config;
-	u32 volatile source_addr;
-	u32 volatile dest_addr;
-	u32 volatile byte_count;
-	u32 volatile commit_para;
-	u32 volatile link;
-	u32 volatile reserved[2];
+	volatile u32 config;
+	volatile u32 source_addr;
+	volatile u32 dest_addr;
+	volatile u32 byte_count;
+	volatile u32 commit_para;
+	volatile u32 link;
+	volatile u32 reserved[2];
 } dma_desc_t;
 
 typedef struct {
-	u32 volatile src_drq_type : 6;
-	u32 volatile src_burst_length : 2;
-	u32 volatile src_addr_mode : 1;
-	u32 volatile src_data_width : 2;
-	u32 volatile reserved0 : 5;
-	u32 volatile dst_drq_type : 6;
-	u32 volatile dst_burst_length : 2;
-	u32 volatile dst_addr_mode : 1;
-	u32 volatile dst_data_width : 2;
-	u32 volatile reserved1 : 5;
+	volatile u32 src_drq_type : 6;
+	volatile u32 src_burst_length : 2;
+	volatile u32 src_addr_mode : 1;
+	volatile u32 src_data_width : 2;
+	volatile u32 reserved0 : 5;
+	volatile u32 dst_drq_type : 6;
+	volatile u32 dst_burst_length : 2;
+	volatile u32 dst_addr_mode : 1;
+	volatile u32 dst_data_width : 2;
+	volatile u32 reserved1 : 5;
 } dma_channel_config_t;
 
 typedef struct {
 	dma_channel_config_t channel_cfg;
-	u32					 loop_mode;
-	u32					 data_block_size;
-	u32					 wait_cyc;
+	u32 loop_mode;
+	u32 data_block_size;
+	u32 wait_cyc;
 } dma_set_t;
 
 typedef struct {
@@ -99,45 +99,45 @@ typedef struct {
 } dma_irq_handler_t;
 
 typedef struct {
-	u32 volatile enable;
-	u32 volatile pause;
-	u32 volatile desc_addr;
-	u32 volatile config;
-	u32 volatile cur_src_addr;
-	u32 volatile cur_dst_addr;
-	u32 volatile left_bytes;
-	u32 volatile parameters;
-	u32 volatile mode;
-	u32 volatile fdesc_addr;
-	u32 volatile pkg_num;
-	u32 volatile res[5];
+	volatile u32 enable;
+	volatile u32 pause;
+	volatile u32 desc_addr;
+	volatile u32 config;
+	volatile u32 cur_src_addr;
+	volatile u32 cur_dst_addr;
+	volatile u32 left_bytes;
+	volatile u32 parameters;
+	volatile u32 mode;
+	volatile u32 fdesc_addr;
+	volatile u32 pkg_num;
+	volatile u32 res[5];
 } dma_channel_reg_t;
 
 typedef struct {
-	u32 volatile irq_en0; /* 0x0 dma irq enable register 0 */
-	u32 volatile irq_en1; /* 0x4 dma irq enable register 1 */
-	u32 volatile reserved0[2];
-	u32 volatile irq_pending0; /* 0x10 dma irq pending register 0 */
-	u32 volatile irq_pending1; /* 0x14 dma irq pending register 1 */
-	u32 volatile reserved1[2];
-	u32 volatile security; /* 0x20 dma security register */
-	u32 volatile reserved3[1];
-	u32 volatile auto_gate; /* 0x28 dma auto gating register */
-	u32 volatile reserved4[1];
-	u32 volatile status; /* 0x30 dma status register */
-	u32 volatile reserved5[3];
-	u32 volatile version; /* 0x40 dma Version register */
-	u32 volatile reserved6[47];
+	volatile u32 irq_en0; /* 0x0 dma irq enable register 0 */
+	volatile u32 irq_en1; /* 0x4 dma irq enable register 1 */
+	volatile u32 reserved0[2];
+	volatile u32 irq_pending0; /* 0x10 dma irq pending register 0 */
+	volatile u32 irq_pending1; /* 0x14 dma irq pending register 1 */
+	volatile u32 reserved1[2];
+	volatile u32 security; /* 0x20 dma security register */
+	volatile u32 reserved3[1];
+	volatile u32 auto_gate; /* 0x28 dma auto gating register */
+	volatile u32 reserved4[1];
+	volatile u32 status; /* 0x30 dma status register */
+	volatile u32 reserved5[3];
+	volatile u32 version; /* 0x40 dma Version register */
+	volatile u32 reserved6[47];
 	dma_channel_reg_t channel[16]; /* 0x100 dma channel register */
 } dma_reg_t;
 
 typedef struct {
-	u32				   used;
-	u32				   channel_count;
+	u32 used;
+	u32 channel_count;
 	dma_channel_reg_t *channel;
-	u32				   reserved;
-	dma_desc_t		   *desc;
-	dma_irq_handler_t  dma_func;
+	u32 reserved;
+	dma_desc_t *desc;
+	dma_irq_handler_t dma_func;
 } dma_source_t;
 
 #define DMA_RST_OFS	   16

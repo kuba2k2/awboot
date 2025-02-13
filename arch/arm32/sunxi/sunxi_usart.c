@@ -1,18 +1,19 @@
 #include <stdarg.h>
+
+#include "main.h"
+
+#include "board.h"
 #include "io.h"
 #include "irq.h"
-#include "main.h"
-#include "board.h"
-#include "sunxi_usart.h"
-#include "sunxi_ccu.h"
 #include "reg-ccu.h"
+#include "sunxi_ccu.h"
+#include "sunxi_usart.h"
 
 #ifdef CONFIG_ENABLE_CONSOLE
 void sunxi_uart_irq_handler(void *arg);
 #endif
 
-void sunxi_usart_init(sunxi_usart_t *usart)
-{
+void sunxi_usart_init(sunxi_usart_t *usart) {
 	uint32_t addr;
 	uint32_t val;
 
@@ -61,8 +62,7 @@ void sunxi_usart_init(sunxi_usart_t *usart)
 #endif
 }
 
-void sunxi_usart_putc(void *arg, char c)
-{
+void sunxi_usart_putc(void *arg, char c) {
 	sunxi_usart_t *usart = (sunxi_usart_t *)arg;
 
 	while (!(read32(usart->base + 0x14) & (0x1 << 5)))
@@ -75,21 +75,18 @@ void sunxi_usart_putc(void *arg, char c)
 }
 
 #ifdef CONFIG_ENABLE_CONSOLE
-void sunxi_uart_irq_handler(void *arg)
-{
+void sunxi_uart_irq_handler(void *arg) {
 	sunxi_usart_t *usart = (sunxi_usart_t *)arg;
 
 	uint32_t val = read32(usart->base);
 	ringbuffer_put(&usart->ringbuf, (uint8_t)val);
 }
 
-uint16_t sunxi_usart_data_in_receive_buffer(sunxi_usart_t *usart)
-{
+uint16_t sunxi_usart_data_in_receive_buffer(sunxi_usart_t *usart) {
 	return ringbuffer_num(&usart->ringbuf);
 }
 
-uint8_t sunxi_usart_getbyte(sunxi_usart_t *usart)
-{
+uint8_t sunxi_usart_getbyte(sunxi_usart_t *usart) {
 	uint8_t ans;
 
 	ringbuffer_get(&usart->ringbuf, &ans);

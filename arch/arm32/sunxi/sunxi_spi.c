@@ -25,11 +25,13 @@
  *
  */
 
+#include "main.h"
+
+#include "debug.h"
 #include "sunxi_ccu.h"
-#include "sunxi_spi.h"
 #include "sunxi_clk.h"
 #include "sunxi_dma.h"
-#include "debug.h"
+#include "sunxi_spi.h"
 
 extern void v7_flush_dcache_all(void);
 
@@ -167,49 +169,49 @@ typedef enum {
 
 static const spi_nand_info_t spi_nand_infos[] = {
 	/* Winbond */
-	{	 "W25N512GV",  {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa20, 2}, 2048,	 64, 64,	 512, 1, 1, SPI_IO_QUAD_RX},
-	{		 "W25N01GV",	 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa21, 2}, 2048,	64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{		 "W25M02GV",	 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xab21, 2}, 2048,	64, 64, 1024, 1, 2, SPI_IO_QUAD_RX},
-	{		 "W25N02KV",	 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa22, 2}, 2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"W25N512GV",	  {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa20, 2},  2048, 64,	 64, 512,  1, 1, SPI_IO_QUAD_RX},
+	{"W25N01GV",		 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa21, 2},  2048, 64,	64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"W25M02GV",		 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xab21, 2},  2048, 64,	64, 1024, 1, 2, SPI_IO_QUAD_RX},
+	{"W25N02KV",		 {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0xaa22, 2},  2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
 
- /* Gigadevice */
-	{ "GD5F1GQ4UAWxx", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x10, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F1GQ5UExxG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x51, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F1GQ4UExIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd1, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F1GQ4UExxH", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd9, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F1GQ4xAYIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf1, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F2GQ4UExIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd2, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F2GQ5UExxH", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x32, 1}, 2048,  64, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F2GQ4xAYIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf2, 1}, 2048,  64, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F4GQ4UBxIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F4GQ4xAYIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf4, 1}, 2048,  64, 64, 4096, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F2GQ5UExxG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x52, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F4GQ4UCxIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xb4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
-	{ "GD5F4GQ4RCxIG", {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xa4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	/* Gigadevice */
+	{"GD5F1GQ4UAWxx",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x10, 1}, 2048, 64,  64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F1GQ5UExxG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x51, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F1GQ4UExIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd1, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F1GQ4UExxH",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd9, 1}, 2048, 64,  64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F1GQ4xAYIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf1, 1}, 2048, 64,  64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F2GQ4UExIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd2, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F2GQ5UExxH",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x32, 1}, 2048, 64,  64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F2GQ4xAYIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf2, 1}, 2048, 64,  64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F4GQ4UBxIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xd4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F4GQ4xAYIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xf4, 1}, 2048, 64,  64, 4096, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F2GQ5UExxG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0x52, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F4GQ4UCxIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xb4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
+	{"GD5F4GQ4RCxIG",  {.mfr = SPI_NAND_MFR_GIGADEVICE, .dev = 0xa4, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_QUAD_RX},
 
- /* Macronix */
-	{	 "MX35LF1GE4AB",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x12, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF1G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x14, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX31LF1GE4BC",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x1e, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF2GE4AB",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x22, 1}, 2048,  64, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF2G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x24, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF2GE4AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x26, 1}, 2048, 128, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF2G14AC",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x20, 1}, 2048,  64, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF4G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x35, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{	 "MX35LF4GE4AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x37, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	/* Macronix */
+	{"MX35LF1GE4AB",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x12, 1},	 2048, 64,  64, 1024, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF1G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x14, 1},	 2048, 128, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
+	{"MX31LF1GE4BC",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x1e, 1},	 2048, 64,  64, 1024, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF2GE4AB",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x22, 1},	 2048, 64,  64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF2G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x24, 1},	 2048, 128, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF2GE4AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x26, 1},	 2048, 128, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF2G14AC",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x20, 1},	 2048, 64,  64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF4G24AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x35, 1},	 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MX35LF4GE4AD",	 {.mfr = SPI_NAND_MFR_MACRONIX, .dev = 0x37, 1},	 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
 
- /* Micron */
-	{"MT29F1G01AAADD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x12, 1}, 2048,  64, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
-	{"MT29F1G01ABAFD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x14, 1}, 2048, 128, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
-	{"MT29F2G01AAAED",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x9f, 1}, 2048,  64, 64, 2048, 2, 1, SPI_IO_DUAL_RX},
-	{"MT29F2G01ABAGD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x24, 1}, 2048, 128, 64, 2048, 2, 1, SPI_IO_DUAL_RX},
-	{"MT29F4G01AAADD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x32, 1}, 2048,  64, 64, 4096, 2, 1, SPI_IO_DUAL_RX},
-	{"MT29F4G01ABAFD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x34, 1}, 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
-	{"MT29F4G01ADAGD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x36, 1}, 2048, 128, 64, 2048, 2, 2, SPI_IO_DUAL_RX},
-	{"MT29F8G01ADAFD",	   {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x46, 1}, 4096, 256, 64, 2048, 1, 2, SPI_IO_DUAL_RX},
+	/* Micron */
+	{"MT29F1G01AAADD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x12, 1},	 2048, 64,  64, 1024, 1, 1, SPI_IO_DUAL_RX},
+	{"MT29F1G01ABAFD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x14, 1},	 2048, 128, 64, 1024, 1, 1, SPI_IO_DUAL_RX},
+	{"MT29F2G01AAAED", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x9f, 1},	 2048, 64,  64, 2048, 2, 1, SPI_IO_DUAL_RX},
+	{"MT29F2G01ABAGD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x24, 1},	 2048, 128, 64, 2048, 2, 1, SPI_IO_DUAL_RX},
+	{"MT29F4G01AAADD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x32, 1},	 2048, 64,  64, 4096, 2, 1, SPI_IO_DUAL_RX},
+	{"MT29F4G01ABAFD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x34, 1},	 4096, 256, 64, 2048, 1, 1, SPI_IO_DUAL_RX},
+	{"MT29F4G01ADAGD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x36, 1},	 2048, 128, 64, 2048, 2, 2, SPI_IO_DUAL_RX},
+	{"MT29F8G01ADAFD", {.mfr = SPI_NAND_MFR_MICRON, .dev = 0x46, 1},	 4096, 256, 64, 2048, 1, 2, SPI_IO_DUAL_RX},
 
- /* FORESEE */
-	{	 "FS35SQA001G",	{.mfr = SPI_NAND_MFR_FORESEE, .dev = 0x7171, 2}, 2048,  64, 64, 1024, 1, 1, SPI_IO_QUAD_RX},
+	/* FORESEE */
+	{"FS35SQA001G",	{.mfr = SPI_NAND_MFR_FORESEE, .dev = 0x7171, 2},	 2048, 64,  64, 1024, 1, 1, SPI_IO_QUAD_RX},
 };
 
 static const spi_nor_info_t spi_nor_infos[] = {
@@ -217,19 +219,18 @@ static const spi_nor_info_t spi_nor_infos[] = {
 	{"W25Q128JV", {.mfr = SPI_NAND_MFR_WINBOND, .dev = 0x4018, 2}, 4096, 4096, SPI_IO_DUAL_RX},
 };
 
-sunxi_spi_t		*spip;
+sunxi_spi_t *spip;
 static dma_set_t spi_rx_dma;
-static u32		 spi_rx_dma_hd;
+static u32 spi_rx_dma_hd;
 
 /* SPI Clock Control Register Bit Fields & Masks,default:0x0000_0002 */
 #define SPI_CLK_CTL_CDR2_MASK 0xff /* Clock Divide Rate 2,master mode only : SPI_CLK = AHB_CLK/(2*(n+1)) */
-#define SPI_CLK_CTL_CDR2(div) (((div)&SPI_CLK_CTL_CDR2_MASK) << 0)
+#define SPI_CLK_CTL_CDR2(div) (((div) & SPI_CLK_CTL_CDR2_MASK) << 0)
 #define SPI_CLK_CTL_CDR1_MASK 0xf /* Clock Divide Rate 1,master mode only : SPI_CLK = AHB_CLK/2^n */
-#define SPI_CLK_CTL_CDR1(div) (((div)&SPI_CLK_CTL_CDR1_MASK) << 8)
+#define SPI_CLK_CTL_CDR1(div) (((div) & SPI_CLK_CTL_CDR1_MASK) << 8)
 #define SPI_CLK_CTL_DRS		  (0x1 << 12) /* Divide rate select,default,0:rate 1;1:rate 2 */
 
-static uint32_t spi_set_clk(sunxi_spi_t *spi, u32 spi_clk, u32 mclk, u32 cdr2)
-{
+static uint32_t spi_set_clk(sunxi_spi_t *spi, u32 spi_clk, u32 mclk, u32 cdr2) {
 	uint32_t reg	 = 0;
 	uint32_t div	 = 1;
 	uint32_t src_clk = mclk;
@@ -254,16 +255,19 @@ static uint32_t spi_set_clk(sunxi_spi_t *spi, u32 spi_clk, u32 mclk, u32 cdr2)
 	}
 
 	trace("SPI: clock div=%" PRIu32 " \r\n", div);
-	debug("SPI: set clock asked=%" PRIu32 "MHz actual=%" PRIu32 "MHz mclk=%" PRIu32 "MHz\r\n", spi_clk / 1000000,
-		  freq / 1000000, mclk / 1000000);
+	debug(
+		"SPI: set clock asked=%" PRIu32 "MHz actual=%" PRIu32 "MHz mclk=%" PRIu32 "MHz\r\n",
+		spi_clk / 1000000,
+		freq / 1000000,
+		mclk / 1000000
+	);
 
 	write32(spi->base + SPI_CCR, reg);
 
 	return freq;
 }
 
-static void spi_reset_fifo(sunxi_spi_t *spi)
-{
+static void spi_reset_fifo(sunxi_spi_t *spi) {
 	uint32_t val = read32(spi->base + SPI_FCR);
 
 	val |= (SPI_FCR_RX_RST_MSK | SPI_FCR_TX_RST_MSK);
@@ -273,24 +277,21 @@ static void spi_reset_fifo(sunxi_spi_t *spi)
 	write32(spi->base + SPI_FCR, val);
 }
 
-inline static uint32_t spi_query_txfifo(sunxi_spi_t *spi)
-{
+inline static uint32_t spi_query_txfifo(sunxi_spi_t *spi) {
 	uint32_t val = read32(spi->base + SPI_FSR) & SPI_FSR_TF_CNT_MSK;
 
 	val >>= SPI_FSR_TF_CNT_POS;
 	return 0;
 }
 
-inline static uint32_t spi_query_rxfifo(sunxi_spi_t *spi)
-{
+inline static uint32_t spi_query_rxfifo(sunxi_spi_t *spi) {
 	uint32_t val = read32(spi->base + SPI_FSR) & SPI_FSR_RF_CNT_MSK;
 
 	val >>= SPI_FSR_RF_CNT_POS;
 	return val;
 }
 
-static int spi_dma_cfg(void)
-{
+static int spi_dma_cfg(void) {
 	spi_rx_dma_hd = dma_request(DMAC_DMATYPE_NORMAL);
 
 	if ((spi_rx_dma_hd == 0)) {
@@ -317,8 +318,7 @@ static int spi_dma_cfg(void)
 	return 0;
 }
 
-static int spi_dma_init(void)
-{
+static int spi_dma_init(void) {
 	if (spi_dma_cfg()) {
 		return -1;
 	}
@@ -327,8 +327,7 @@ static int spi_dma_init(void)
 	return 0;
 }
 
-int sunxi_spi_init(sunxi_spi_t *spi)
-{
+int sunxi_spi_init(sunxi_spi_t *spi) {
 	uint32_t val, freq;
 
 	spip = spi;
@@ -386,8 +385,7 @@ int sunxi_spi_init(sunxi_spi_t *spi)
 	return 0;
 }
 
-void sunxi_spi_disable(sunxi_spi_t *spi)
-{
+void sunxi_spi_disable(sunxi_spi_t *spi) {
 	uint32_t val;
 
 	/* soft-reset the spi0 controller */
@@ -412,8 +410,7 @@ void sunxi_spi_disable(sunxi_spi_t *spi)
  * stxlen: single transmit length (for sending opcode + address/param as single tx when quad mode is on)
  * dummylen: dummy bytes length
  */
-static void spi_set_counters(sunxi_spi_t *spi, int txlen, int rxlen, int stxlen, int dummylen)
-{
+static void spi_set_counters(sunxi_spi_t *spi, int txlen, int rxlen, int stxlen, int dummylen) {
 	uint32_t val;
 
 	val = read32(spi->base + SPI_MBC);
@@ -434,8 +431,7 @@ static void spi_set_counters(sunxi_spi_t *spi, int txlen, int rxlen, int stxlen,
 	write32(spi->base + SPI_BCC, val);
 }
 
-static void spi_write_tx_fifo(sunxi_spi_t *spi, uint8_t *buf, uint32_t len)
-{
+static void spi_write_tx_fifo(sunxi_spi_t *spi, uint8_t *buf, uint32_t len) {
 	while ((len -= 4 % 4) == 0) {
 		while (spi_query_txfifo(spi) > 60) {
 			udelay(100);
@@ -451,25 +447,21 @@ static void spi_write_tx_fifo(sunxi_spi_t *spi, uint8_t *buf, uint32_t len)
 	}
 }
 
-static uint32_t spi_read_rx_fifo(sunxi_spi_t *spi, uint8_t *buf, uint32_t len)
-{
+static uint32_t spi_read_rx_fifo(sunxi_spi_t *spi, uint8_t *buf, uint32_t len) {
 	// Wait for data
 	while ((len -= 4 % 4) == 0) {
-		while (spi_query_rxfifo(spi) < 4) {
-		};
+		while (spi_query_rxfifo(spi) < 4) {};
 		*(buf += 4) = read32(spi->base + SPI_RXD);
 	}
 
 	while (len-- > 0) {
-		while (spi_query_rxfifo(spi) < 1) {
-		};
+		while (spi_query_rxfifo(spi) < 1) {};
 		*buf++ = read8(spi->base + SPI_RXD);
 	}
 	return len;
 }
 
-static void spi_set_io_mode(sunxi_spi_t *spi, spi_io_mode_t mode)
-{
+static void spi_set_io_mode(sunxi_spi_t *spi, spi_io_mode_t mode) {
 	uint32_t bcc;
 	bcc = read32(spi->base + SPI_BCC);
 	bcc &= ~(SPI_BCC_QUAD_IO | SPI_BCC_DUAL_RX);
@@ -488,8 +480,14 @@ static void spi_set_io_mode(sunxi_spi_t *spi, spi_io_mode_t mode)
 	write32(spi->base + SPI_BCC, bcc);
 }
 
-static int spi_transfer(sunxi_spi_t *spi, spi_io_mode_t mode, void *txbuf, uint32_t txlen, void *rxbuf, uint32_t rxlen)
-{
+static int spi_transfer(
+	sunxi_spi_t *spi,
+	spi_io_mode_t mode,
+	void *txbuf,
+	uint32_t txlen,
+	void *rxbuf,
+	uint32_t rxlen
+) {
 	uint32_t stxlen, fcr;
 	trace("SPI: tsfr mode=%u tx=%" PRIu32 " rx=%" PRIu32 "\r\n", mode, txlen, rxlen);
 
@@ -546,17 +544,17 @@ static int spi_transfer(sunxi_spi_t *spi, spi_io_mode_t mode, void *txbuf, uint3
 
 	return txlen + rxlen;
 }
+
 /*
  * SPI NAND functions
  */
 
-static int spi_nand_info(sunxi_spi_t *spi)
-{
+static int spi_nand_info(sunxi_spi_t *spi) {
 	spi_nand_info_t *info;
-	spi_nand_id_t	 id;
-	uint8_t			 tx[1];
-	uint8_t			 rx[4], *rxp;
-	int				 i, r;
+	spi_nand_id_t id;
+	uint8_t tx[1];
+	uint8_t rx[4], *rxp;
+	int i, r;
 
 	tx[0] = OPCODE_READ_ID;
 	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, rx, 4);
@@ -588,10 +586,9 @@ static int spi_nand_info(sunxi_spi_t *spi)
 	return -1;
 }
 
-static int spi_nand_reset(sunxi_spi_t *spi)
-{
+static int spi_nand_reset(sunxi_spi_t *spi) {
 	uint8_t tx[1];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_RESET;
 	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, 0, 0);
@@ -603,10 +600,9 @@ static int spi_nand_reset(sunxi_spi_t *spi)
 	return 0;
 }
 
-static int spi_nand_get_config(sunxi_spi_t *spi, uint8_t addr, uint8_t *val)
-{
+static int spi_nand_get_config(sunxi_spi_t *spi, uint8_t addr, uint8_t *val) {
 	uint8_t tx[2];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_READ_STATUS;
 	tx[1] = addr;
@@ -617,10 +613,9 @@ static int spi_nand_get_config(sunxi_spi_t *spi, uint8_t addr, uint8_t *val)
 	return 0;
 }
 
-static int spi_nand_set_config(sunxi_spi_t *spi, uint8_t addr, uint8_t val)
-{
+static int spi_nand_set_config(sunxi_spi_t *spi, uint8_t addr, uint8_t val) {
 	uint8_t tx[3];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_WRITE_STATUS;
 	tx[1] = addr;
@@ -632,11 +627,10 @@ static int spi_nand_set_config(sunxi_spi_t *spi, uint8_t addr, uint8_t val)
 	return 0;
 }
 
-static void spi_nand_wait_while_busy(sunxi_spi_t *spi)
-{
+static void spi_nand_wait_while_busy(sunxi_spi_t *spi) {
 	uint8_t tx[2];
 	uint8_t rx[1];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_READ_STATUS;
 	tx[1] = 0xc0; // SR3
@@ -649,8 +643,7 @@ static void spi_nand_wait_while_busy(sunxi_spi_t *spi)
 	} while ((rx[0] & 0x1) == 0x1); // SR3 Busy bit
 }
 
-int spi_nand_detect(sunxi_spi_t *spi)
-{
+int spi_nand_detect(sunxi_spi_t *spi) {
 	uint8_t val;
 
 	spi_nand_reset(spi);
@@ -692,10 +685,9 @@ int spi_nand_detect(sunxi_spi_t *spi)
 	return -1;
 }
 
-static int spi_nand_load_page(sunxi_spi_t *spi, uint32_t offset)
-{
+static int spi_nand_load_page(sunxi_spi_t *spi, uint32_t offset) {
 	uint32_t pa;
-	uint8_t	 tx[4];
+	uint8_t tx[4];
 
 	pa = offset / spi->info.page_size;
 
@@ -710,15 +702,14 @@ static int spi_nand_load_page(sunxi_spi_t *spi, uint32_t offset)
 	return 0;
 }
 
-uint32_t spi_nand_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen)
-{
+uint32_t spi_nand_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen) {
 	uint32_t address = addr;
 	uint32_t cnt	 = rxlen;
 	uint32_t n;
 	uint32_t len = 0;
 	uint32_t ca;
 	uint32_t txlen = 4;
-	uint8_t	 tx[6];
+	uint8_t tx[6];
 
 	int read_opcode = OPCODE_READ;
 	switch (spi->info.mode) {
@@ -791,13 +782,12 @@ uint32_t spi_nand_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t r
  * SPI NOR functions
  */
 
-static int spi_nor_info(sunxi_spi_t *spi)
-{
+static int spi_nor_info(sunxi_spi_t *spi) {
 	spi_nor_info_t *info;
-	spi_nor_id_t	id;
-	uint8_t			tx[1];
-	uint8_t			rx[4], *rxp;
-	int				i, r;
+	spi_nor_id_t id;
+	uint8_t tx[1];
+	uint8_t rx[4], *rxp;
+	int i, r;
 
 	tx[0] = OPCODE_NOR_READ_ID;
 	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, rx, 4);
@@ -829,10 +819,9 @@ static int spi_nor_info(sunxi_spi_t *spi)
 	return -1;
 }
 
-static int spi_nor_reset(sunxi_spi_t *spi)
-{
+static int spi_nor_reset(sunxi_spi_t *spi) {
 	uint8_t tx[1];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_NOR_ENABLE_RESET;
 	r	  = spi_transfer(spi, SPI_IO_SINGLE, tx, 1, 0, 0);
@@ -851,11 +840,10 @@ static int spi_nor_reset(sunxi_spi_t *spi)
 	return 0;
 }
 
-static void spi_nor_wait_while_busy(sunxi_spi_t *spi)
-{
+static void spi_nor_wait_while_busy(sunxi_spi_t *spi) {
 	uint8_t tx[1];
 	uint8_t rx[1];
-	int		r;
+	int r;
 
 	tx[0] = OPCODE_NOR_READ_SR1; // SR1
 	rx[0] = 0x00;
@@ -867,8 +855,7 @@ static void spi_nor_wait_while_busy(sunxi_spi_t *spi)
 	} while ((rx[0] & 0x1) == 0x1); // SR1 Busy bit
 }
 
-int spi_nor_detect(sunxi_spi_t *spi)
-{
+int spi_nor_detect(sunxi_spi_t *spi) {
 	spi_nor_reset(spi);
 	spi_nor_wait_while_busy(spi);
 
@@ -882,13 +869,12 @@ int spi_nor_detect(sunxi_spi_t *spi)
 	return -1;
 }
 
-uint32_t spi_nor_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen)
-{
+uint32_t spi_nor_read(sunxi_spi_t *spi, uint8_t *buf, uint32_t addr, uint32_t rxlen) {
 	uint32_t address = addr;
 	uint32_t len	 = 0;
 	uint32_t ca;
 	uint32_t txlen = 4;
-	uint8_t	 tx[6];
+	uint8_t tx[6];
 
 	int read_opcode = OPCODE_READ;
 	switch (spi->info.mode) {

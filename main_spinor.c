@@ -4,11 +4,10 @@
 #include "sunxi_dma.h"
 #include "sunxi_spi.h"
 
-extern sunxi_spi_t	sunxi_spi0;
+extern sunxi_spi_t sunxi_spi0;
 static unsigned int spinor_addr;
 
-static int spinor_read_func(unsigned int *addr, void *buf, unsigned int len)
-{
+static int spinor_read_func(unsigned int *addr, void *buf, unsigned int len) {
 	uint64_t UNUSED_DEBUG start, time;
 
 	start = time_us();
@@ -20,8 +19,7 @@ static int spinor_read_func(unsigned int *addr, void *buf, unsigned int len)
 	return len;
 }
 
-int load_spinor(void *kernel_entry, void *kernel_param)
-{
+int load_spinor(void *kernel_entry, void *kernel_param) {
 	dma_init();
 	dma_test();
 	debug("SPI: init\r\n");

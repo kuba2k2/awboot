@@ -27,7 +27,9 @@
  */
 
 #include <arm32.h>
+
 #include "main.h"
+
 #include "debug.h"
 #include "irq.h"
 #include "sunxi_irq.h"
@@ -56,7 +58,7 @@ enum {
 
 struct irq_tbl_t {
 	irq_handler_t handler;
-	void		 *arg;
+	void *arg;
 };
 
 struct irq_tbl_t irq_table[IRQ_MAX];
@@ -72,8 +74,7 @@ struct arm_regs_t {
 
 static void default_handler(void *arg);
 
-static void show_regs(struct arm_regs_t *regs)
-{
+static void show_regs(struct arm_regs_t *regs) {
 	int i;
 
 	debug("pc : [<%08lx>] lr : [<%08lx>] cpsr: %08lx\r\n", regs->pc, regs->lr, regs->cpsr);
@@ -83,36 +84,31 @@ static void show_regs(struct arm_regs_t *regs)
 	debug("\r\n");
 }
 
-void arm32_do_undefined_instruction(struct arm_regs_t *regs)
-{
+void arm32_do_undefined_instruction(struct arm_regs_t *regs) {
 	show_regs(regs);
 	debug("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
-void arm32_do_software_interrupt(struct arm_regs_t *regs)
-{
+void arm32_do_software_interrupt(struct arm_regs_t *regs) {
 	show_regs(regs);
 	debug("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
-void arm32_do_prefetch_abort(struct arm_regs_t *regs)
-{
+void arm32_do_prefetch_abort(struct arm_regs_t *regs) {
 	show_regs(regs);
 	debug("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
-void arm32_do_data_abort(struct arm_regs_t *regs)
-{
+void arm32_do_data_abort(struct arm_regs_t *regs) {
 	show_regs(regs);
 	debug("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
-void arm32_do_irq(struct arm_regs_t *regs)
-{
+void arm32_do_irq(struct arm_regs_t *regs) {
 	(void)regs;
 
 	int irq = read32(GIC400_BASE_ADDR + CPU_INTACK) & 0x3ff;
@@ -124,8 +120,7 @@ void arm32_do_irq(struct arm_regs_t *regs)
 	write32(GIC400_BASE_ADDR + CPU_EOI, irq);
 }
 
-void arm32_do_fiq(struct arm_regs_t *regs)
-{
+void arm32_do_fiq(struct arm_regs_t *regs) {
 	(void)regs;
 
 	int irq = read32(GIC400_BASE_ADDR + CPU_INTACK) & 0x3ff;
@@ -137,8 +132,7 @@ void arm32_do_fiq(struct arm_regs_t *regs)
 	write32(GIC400_BASE_ADDR + CPU_EOI, irq);
 }
 
-void default_handler(void *arg)
-{
+void default_handler(void *arg) {
 	(void)arg;
 
 	debug("irq: unexpected irq \r\n");
@@ -146,21 +140,18 @@ void default_handler(void *arg)
 		;
 }
 
-void gic400_irq_enable(int irq)
-{
+void gic400_irq_enable(int irq) {
 	write32(GIC400_BASE_ADDR + DIST_ENABLE_SET + (irq / 32) * 4, 1 << (irq % 32));
 }
 
-void gic400_irq_disable(int irq)
-{
+void gic400_irq_disable(int irq) {
 	write32(GIC400_BASE_ADDR + DIST_ENABLE_CLEAR + (irq / 32) * 4, 1 << (irq % 32));
 }
 
-static void gic400_dist_init()
-{
+static void gic400_dist_init() {
 	uint32_t gic_irqs;
 	uint32_t cpumask;
-	int		 i;
+	int i;
 
 	write32(GIC400_BASE_ADDR + DIST_CTRL, 0x0);
 
@@ -204,8 +195,7 @@ static void gic400_dist_init()
 	write32(GIC400_BASE_ADDR + DIST_CTRL, 0x1);
 }
 
-static void gic400_cpu_init()
-{
+static void gic400_cpu_init() {
 	int i;
 
 	/*
@@ -225,14 +215,12 @@ static void gic400_cpu_init()
 	write32(GIC400_BASE_ADDR + CPU_CTRL, 0x1);
 }
 
-void gic400_set_irq_handler(uint32_t irq, irq_handler_t handler, void *arg)
-{
+void gic400_set_irq_handler(uint32_t irq, irq_handler_t handler, void *arg) {
 	irq_table[irq].handler = handler;
 	irq_table[irq].arg	   = arg;
 }
 
-void gic400_init()
-{
+void gic400_init() {
 	// set default irq handler
 	for (uint32_t i = 0; i < IRQ_MAX; i++) {
 		irq_table[i].handler = default_handler;

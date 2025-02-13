@@ -27,10 +27,11 @@
  */
 
 #include "main.h"
-#include "debug.h"
-#include "sunxi_sdhci.h"
-#include "sdmmc.h"
+
 #include "board.h"
+#include "debug.h"
+#include "sdmmc.h"
+#include "sunxi_sdhci.h"
 
 #define FALSE 0
 #define TRUE  1
@@ -39,15 +40,15 @@
  * EXT_CSD fields
  */
 
-#define EXT_CSD_CMDQ_MODE_EN				15 /* R/W */
-#define EXT_CSD_FLUSH_CACHE					32 /* W */
-#define EXT_CSD_CACHE_CTRL					33 /* R/W */
-#define EXT_CSD_POWER_OFF_NOTIFICATION		34 /* R/W */
-#define EXT_CSD_PACKED_FAILURE_INDEX		35 /* RO */
-#define EXT_CSD_PACKED_CMD_STATUS			36 /* RO */
-#define EXT_CSD_EXP_EVENTS_STATUS			54 /* RO, 2 bytes */
-#define EXT_CSD_EXP_EVENTS_CTRL				56 /* R/W, 2 bytes */
-#define EXT_CSD_DATA_SECTOR_SIZE			61 /* R */
+#define EXT_CSD_CMDQ_MODE_EN				15	/* R/W */
+#define EXT_CSD_FLUSH_CACHE					32	/* W */
+#define EXT_CSD_CACHE_CTRL					33	/* R/W */
+#define EXT_CSD_POWER_OFF_NOTIFICATION		34	/* R/W */
+#define EXT_CSD_PACKED_FAILURE_INDEX		35	/* RO */
+#define EXT_CSD_PACKED_CMD_STATUS			36	/* RO */
+#define EXT_CSD_EXP_EVENTS_STATUS			54	/* RO, 2 bytes */
+#define EXT_CSD_EXP_EVENTS_CTRL				56	/* R/W, 2 bytes */
+#define EXT_CSD_DATA_SECTOR_SIZE			61	/* R */
 #define EXT_CSD_GP_SIZE_MULT				143 /* R/W */
 #define EXT_CSD_PARTITION_SETTING_COMPLETED 155 /* R/W */
 #define EXT_CSD_PARTITION_ATTRIBUTE			156 /* R/W */
@@ -120,7 +121,7 @@
 
 #define EXT_CSD_CARD_TYPE_26	   (1 << 0) /* Card can run at 26MHz */
 #define EXT_CSD_CARD_TYPE_52	   (1 << 1) /* Card can run at 52MHz */
-#define EXT_CSD_CARD_TYPE_MASK	   0x3F /* Mask out reserved bits */
+#define EXT_CSD_CARD_TYPE_MASK	   0x3F		/* Mask out reserved bits */
 #define EXT_CSD_CARD_TYPE_DDR_1_8V (1 << 2) /* Card can run at 52MHz */
 /* DDR mode @1.8V or 3V I/O */
 #define EXT_CSD_CARD_TYPE_DDR_1_2V (1 << 3) /* Card can run at 52MHz */
@@ -143,16 +144,16 @@ sdmmc_pdata_t card0;
 
 #define UNSTUFF_BITS(resp, start, size)                              \
 	({                                                               \
-		const int	   __size = size;                                \
+		const int __size	  = size;                                \
 		const uint32_t __mask = (__size < 32 ? 1 << __size : 0) - 1; \
-		const int	   __off  = 3 - ((start) / 32);                  \
-		const int	   __shft = (start)&31;                          \
-		uint32_t	   __res;                                        \
+		const int __off		  = 3 - ((start) / 32);                  \
+		const int __shft	  = (start) & 31;                        \
+		uint32_t __res;                                              \
                                                                      \
 		__res = resp[__off] >> __shft;                               \
 		if (__size + __shft > 32)                                    \
 			__res |= resp[__off - 1] << ((32 - __shft) % 32);        \
-		__res &__mask;                                               \
+		__res & __mask;                                              \
 	})
 
 static const unsigned tran_speed_unit[] = {
@@ -163,11 +164,25 @@ static const unsigned tran_speed_unit[] = {
 };
 
 static const unsigned char tran_speed_time[] = {
-	0, 10, 12, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80,
+	0,
+	10,
+	12,
+	13,
+	15,
+	20,
+	25,
+	30,
+	35,
+	40,
+	45,
+	50,
+	55,
+	60,
+	70,
+	80,
 };
 
-static bool go_idle_state(sdhci_t *hci)
-{
+static bool go_idle_state(sdhci_t *hci) {
 	sdhci_cmd_t cmd = {0};
 
 	// CMD0 0x0 for user partition
@@ -179,8 +194,7 @@ static bool go_idle_state(sdhci_t *hci)
 }
 
 #ifdef CONFIG_BOOT_SDCARD
-static bool sd_send_if_cond(sdhci_t *hci, sdmmc_t *card)
-{
+static bool sd_send_if_cond(sdhci_t *hci, sdmmc_t *card) {
 	sdhci_cmd_t cmd = {0};
 
 	cmd.idx = SD_CMD_SEND_IF_COND;
@@ -201,10 +215,9 @@ static bool sd_send_if_cond(sdhci_t *hci, sdmmc_t *card)
 	return TRUE;
 }
 
-static bool sd_send_op_cond(sdhci_t *hci, sdmmc_t *card)
-{
-	sdhci_cmd_t cmd		= {0};
-	int			retries = 50;
+static bool sd_send_op_cond(sdhci_t *hci, sdmmc_t *card) {
+	sdhci_cmd_t cmd = {0};
+	int retries		= 50;
 
 	if (!go_idle_state(hci))
 		return FALSE;
@@ -264,10 +277,9 @@ static bool sd_send_op_cond(sdhci_t *hci, sdmmc_t *card)
 #endif
 
 #ifdef CONFIG_BOOT_MMC
-static bool mmc_send_op_cond(sdhci_t *hci, sdmmc_t *card)
-{
-	sdhci_cmd_t cmd		= {0};
-	int			retries = 50;
+static bool mmc_send_op_cond(sdhci_t *hci, sdmmc_t *card) {
+	sdhci_cmd_t cmd = {0};
+	int retries		= 50;
 
 	cmd.idx		 = MMC_SEND_OP_COND;
 	cmd.resptype = MMC_RSP_R3;
@@ -304,10 +316,9 @@ static bool mmc_send_op_cond(sdhci_t *hci, sdmmc_t *card)
 }
 #endif
 
-static int sdmmc_status(sdhci_t *hci, sdmmc_t *card)
-{
-	sdhci_cmd_t cmd		= {0};
-	int			retries = 100;
+static int sdmmc_status(sdhci_t *hci, sdmmc_t *card) {
+	sdhci_cmd_t cmd = {0};
+	int retries		= 100;
 
 	cmd.idx		 = MMC_SEND_STATUS;
 	cmd.resptype = MMC_RSP_R1;
@@ -325,11 +336,10 @@ static int sdmmc_status(sdhci_t *hci, sdmmc_t *card)
 	return -1;
 }
 
-static uint64_t sdmmc_read_blocks(sdhci_t *hci, sdmmc_t *card, uint8_t *buf, uint64_t start, uint64_t blkcnt)
-{
-	sdhci_cmd_t	 cmd = {0};
+static uint64_t sdmmc_read_blocks(sdhci_t *hci, sdmmc_t *card, uint8_t *buf, uint64_t start, uint64_t blkcnt) {
+	sdhci_cmd_t cmd	 = {0};
 	sdhci_data_t dat = {0};
-	int			 status;
+	int status;
 
 	if (blkcnt > 1)
 		cmd.idx = MMC_READ_MULTIPLE_BLOCK;
@@ -371,14 +381,13 @@ static uint64_t sdmmc_read_blocks(sdhci_t *hci, sdmmc_t *card, uint8_t *buf, uin
 	return blkcnt;
 }
 
-static bool sdmmc_detect(sdhci_t *hci, sdmmc_t *card)
-{
-	sdhci_cmd_t	 cmd = {0};
+static bool sdmmc_detect(sdhci_t *hci, sdmmc_t *card) {
+	sdhci_cmd_t cmd	 = {0};
 	sdhci_data_t dat = {0};
-	uint64_t	 csize, cmult;
-	uint32_t	 unit, time;
-	int			 width;
-	int			 status;
+	uint64_t csize, cmult;
+	uint32_t unit, time;
+	int width;
+	int status;
 
 	sdhci_reset(hci);
 	if (!sdhci_set_clock(hci, MMC_CLK_400K) || !sdhci_set_width(hci, MMC_BUS_WIDTH_1)) {
@@ -647,9 +656,10 @@ static bool sdmmc_detect(sdhci_t *hci, sdmmc_t *card)
 				cmd.resptype = MMC_RSP_R1;
 				cmd.arg		 = (3 << 24) | (EXT_CSD_POWER_CLASS << 16) | EXT_CSD_CMD_SET_NORMAL;
 				if (width == EXT_CSD_DDR_BUS_WIDTH_4) {
-					cmd.arg |= ((card->extcsd[EXT_CSD_PWR_CL_DDR_52_360] &
-								 EXT_CSD_PWR_CL_4BIT_MASK >> EXT_CSD_PWR_CL_4BIT_SHIFT)
-								<< 8);
+					cmd.arg |=
+						((card->extcsd[EXT_CSD_PWR_CL_DDR_52_360] &
+						  EXT_CSD_PWR_CL_4BIT_MASK >> EXT_CSD_PWR_CL_4BIT_SHIFT)
+						 << 8);
 				} else {
 					cmd.arg |=
 						((card->extcsd[EXT_CSD_PWR_CL_52_360] & EXT_CSD_PWR_CL_4BIT_MASK >> EXT_CSD_PWR_CL_4BIT_SHIFT)
@@ -682,8 +692,7 @@ static bool sdmmc_detect(sdhci_t *hci, sdmmc_t *card)
 	return TRUE;
 }
 
-uint64_t sdmmc_blk_read(sdmmc_pdata_t *data, uint8_t *buf, uint64_t blkno, uint64_t blkcnt)
-{
+uint64_t sdmmc_blk_read(sdmmc_pdata_t *data, uint8_t *buf, uint64_t blkno, uint64_t blkcnt) {
 	uint64_t cnt, blks = blkcnt;
 	sdmmc_t *sdcard = &data->card;
 
@@ -698,8 +707,7 @@ uint64_t sdmmc_blk_read(sdmmc_pdata_t *data, uint8_t *buf, uint64_t blkno, uint6
 	return blkcnt;
 }
 
-int sdmmc_init(sdmmc_pdata_t *data, sdhci_t *hci)
-{
+int sdmmc_init(sdmmc_pdata_t *data, sdhci_t *hci) {
 	data->hci	 = hci;
 	data->online = FALSE;
 	int retries	 = 10;

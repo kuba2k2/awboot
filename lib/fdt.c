@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 #include "main.h"
-#include "string.h"
+
 #include "debug.h"
+#include "string.h"
 
 /* see linux document: ./Documentation/devicetree/booting-without-of.txt */
 #define OF_DT_MAGIC 0xd00dfeed
@@ -32,95 +33,81 @@ struct boot_param_header {
 	unsigned int dt_struct_len;
 };
 
-unsigned int of_get_magic_number(void *blob)
-{
+unsigned int of_get_magic_number(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->magic_number);
 }
 
-static inline unsigned int of_get_format_version(void *blob)
-{
+static inline unsigned int of_get_format_version(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->format_version);
 }
 
-static inline unsigned int of_get_offset_dt_strings(void *blob)
-{
+static inline unsigned int of_get_offset_dt_strings(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->offset_dt_strings);
 }
 
-static inline void of_set_offset_dt_strings(void *blob, unsigned int offset)
-{
+static inline void of_set_offset_dt_strings(void *blob, unsigned int offset) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	header->offset_dt_strings = swap_uint32(offset);
 }
 
-static inline char *of_get_string_by_offset(void *blob, unsigned int offset)
-{
+static inline char *of_get_string_by_offset(void *blob, unsigned int offset) {
 	return (char *)((unsigned int)blob + of_get_offset_dt_strings(blob) + offset);
 }
 
-static inline unsigned int of_get_offset_dt_struct(void *blob)
-{
+static inline unsigned int of_get_offset_dt_struct(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->offset_dt_struct);
 }
 
-static inline unsigned int of_dt_struct_offset(void *blob, unsigned int offset)
-{
+static inline unsigned int of_dt_struct_offset(void *blob, unsigned int offset) {
 	return (unsigned int)blob + of_get_offset_dt_struct(blob) + offset;
 }
 
-unsigned int of_get_dt_total_size(void *blob)
-{
+unsigned int of_get_dt_total_size(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->total_size);
 }
 
-static inline void of_set_dt_total_size(void *blob, unsigned int size)
-{
+static inline void of_set_dt_total_size(void *blob, unsigned int size) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	header->total_size = swap_uint32(size);
 }
 
-static inline unsigned int of_get_dt_strings_len(void *blob)
-{
+static inline unsigned int of_get_dt_strings_len(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->dt_strings_len);
 }
 
-static inline void of_set_dt_strings_len(void *blob, unsigned int len)
-{
+static inline void of_set_dt_strings_len(void *blob, unsigned int len) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	header->dt_strings_len = swap_uint32(len);
 }
 
-static inline unsigned int of_get_dt_struct_len(void *blob)
-{
+static inline unsigned int of_get_dt_struct_len(void *blob) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	return swap_uint32(header->dt_struct_len);
 }
 
-static inline void of_set_dt_struct_len(void *blob, unsigned int len)
-{
+static inline void of_set_dt_struct_len(void *blob, unsigned int len) {
 	struct boot_param_header *header = (struct boot_param_header *)blob;
 
 	header->dt_struct_len = swap_uint32(len);
 }
 
-static inline int of_blob_data_size(void *blob)
-{
+static inline int of_blob_data_size(void *blob) {
 	return (unsigned int)of_get_offset_dt_strings(blob) + of_get_dt_strings_len(blob);
 }
 
@@ -128,12 +115,11 @@ static inline int of_blob_data_size(void *blob)
 
 /* return the token and the next token offset
  */
-static int of_get_token_nextoffset(void *blob, int startoffset, int *nextoffset, unsigned int *token)
-{
+static int of_get_token_nextoffset(void *blob, int startoffset, int *nextoffset, unsigned int *token) {
 	const unsigned int *p, *plen;
-	unsigned int		tag;
-	const char		   *cell;
-	unsigned int		offset = startoffset;
+	unsigned int tag;
+	const char *cell;
+	unsigned int offset = startoffset;
 
 	*nextoffset = -1;
 
@@ -173,12 +159,11 @@ static int of_get_token_nextoffset(void *blob, int startoffset, int *nextoffset,
 	return 0;
 }
 
-static int of_get_nextnode_offset(void *blob, int start_offset, int *offset, int *nextoffset, int *depth)
-{
-	int			 next_offset = 0;
-	int			 nodeoffset	 = start_offset;
+static int of_get_nextnode_offset(void *blob, int start_offset, int *offset, int *nextoffset, int *depth) {
+	int next_offset = 0;
+	int nodeoffset	= start_offset;
 	unsigned int token;
-	int			 ret;
+	int ret;
 
 	if (!offset || !nextoffset || !depth)
 		return -1;
@@ -214,16 +199,15 @@ static int of_get_nextnode_offset(void *blob, int start_offset, int *offset, int
 	return 0;
 }
 
-static int of_get_node_offset(void *blob, const char *name, int *offset)
-{
-	int			 start_offset = 0;
-	int			 nodeoffset	  = 0;
-	int			 nextoffset	  = 0;
-	int			 depth		  = 0;
+static int of_get_node_offset(void *blob, const char *name, int *offset) {
+	int start_offset = 0;
+	int nodeoffset	 = 0;
+	int nextoffset	 = 0;
+	int depth		 = 0;
 	unsigned int token;
 	unsigned int namelen = strlen(name);
-	char		 *nodename;
-	int			 ret;
+	char *nodename;
+	int ret;
 
 	/* find the root node*/
 	ret = of_get_token_nextoffset(blob, 0, &start_offset, &token);
@@ -252,13 +236,12 @@ static int of_get_node_offset(void *blob, const char *name, int *offset)
 
 /* -------------------------------------------------------- */
 
-static int of_blob_move_dt_struct(void *blob, void *point, int oldlen, int newlen)
-{
-	void		 *dest = point + newlen;
-	void		 *src  = point + oldlen;
-	unsigned int len  = (char *)blob + of_blob_data_size(blob) - (char *)point - oldlen;
+static int of_blob_move_dt_struct(void *blob, void *point, int oldlen, int newlen) {
+	void *dest		 = point + newlen;
+	void *src		 = point + oldlen;
+	unsigned int len = (char *)blob + of_blob_data_size(blob) - (char *)point - oldlen;
 
-	int			 delta		   = newlen - oldlen;
+	int delta				   = newlen - oldlen;
 	unsigned int structlen	   = of_get_dt_struct_len(blob) + delta;
 	unsigned int stringsoffset = of_get_offset_dt_strings(blob) + delta;
 
@@ -273,11 +256,10 @@ static int of_blob_move_dt_struct(void *blob, void *point, int oldlen, int newle
 	return 0;
 }
 
-static int of_blob_move_dt_string(void *blob, int newlen)
-{
+static int of_blob_move_dt_string(void *blob, int newlen) {
 	void *point = (void *)((unsigned int)blob + of_get_offset_dt_strings(blob) + of_get_dt_strings_len(blob));
 
-	void		 *dest		= point + newlen;
+	void *dest				= point + newlen;
 	unsigned int len		= (char *)blob + of_blob_data_size(blob) - (char *)point;
 	unsigned int stringslen = of_get_dt_strings_len(blob) + newlen;
 
@@ -289,11 +271,10 @@ static int of_blob_move_dt_string(void *blob, int newlen)
 	return 0;
 }
 
-static int of_get_next_property_offset(void *blob, int startoffset, int *offset, int *nextproperty)
-{
+static int of_get_next_property_offset(void *blob, int startoffset, int *offset, int *nextproperty) {
 	unsigned int token;
-	int			 nextoffset;
-	int			 ret = -1;
+	int nextoffset;
+	int ret = -1;
 
 	while (1) {
 		ret = of_get_token_nextoffset(blob, startoffset, &nextoffset, &token);
@@ -318,16 +299,15 @@ static int of_get_next_property_offset(void *blob, int startoffset, int *offset,
 	return ret;
 }
 
-static int of_get_property_offset_by_name(void *blob, unsigned int nodeoffset, const char *name, int *offset)
-{
-	unsigned int  nameoffset;
+static int of_get_property_offset_by_name(void *blob, unsigned int nodeoffset, const char *name, int *offset) {
+	unsigned int nameoffset;
 	unsigned int *p;
-	unsigned int  namelen		  = strlen(name);
-	int			  startoffset	  = nodeoffset;
-	int			  property_offset = 0;
-	int			  nextoffset	  = 0;
-	char		 *string;
-	int			  ret;
+	unsigned int namelen = strlen(name);
+	int startoffset		 = nodeoffset;
+	int property_offset	 = 0;
+	int nextoffset		 = 0;
+	char *string;
+	int ret;
 
 	*offset = 0;
 
@@ -349,12 +329,11 @@ static int of_get_property_offset_by_name(void *blob, unsigned int nodeoffset, c
 	return -1;
 }
 
-static int of_string_is_find_strings_blob(void *blob, const char *string, int *offset)
-{
-	char *dt_strings	= (char *)blob + of_get_offset_dt_strings(blob);
-	int	  dt_stringslen = of_get_dt_strings_len(blob);
-	int	  len			= strlen(string) + 1;
-	char *lastpoint		= dt_strings + dt_stringslen - len;
+static int of_string_is_find_strings_blob(void *blob, const char *string, int *offset) {
+	char *dt_strings  = (char *)blob + of_get_offset_dt_strings(blob);
+	int dt_stringslen = of_get_dt_strings_len(blob);
+	int len			  = strlen(string) + 1;
+	char *lastpoint	  = dt_strings + dt_stringslen - len;
 	char *p;
 
 	for (p = dt_strings; p <= lastpoint; p++) {
@@ -367,13 +346,12 @@ static int of_string_is_find_strings_blob(void *blob, const char *string, int *o
 	return -1;
 }
 
-static int of_add_string_strings_blob(void *blob, const char *string, int *name_offset)
-{
-	char *dt_strings	= (char *)blob + of_get_offset_dt_strings(blob);
-	int	  dt_stringslen = of_get_dt_strings_len(blob);
+static int of_add_string_strings_blob(void *blob, const char *string, int *name_offset) {
+	char *dt_strings  = (char *)blob + of_get_offset_dt_strings(blob);
+	int dt_stringslen = of_get_dt_strings_len(blob);
 	char *new_string;
-	int	  len = strlen(string) + 1;
-	int	  ret;
+	int len = strlen(string) + 1;
+	int ret;
 
 	new_string = dt_strings + dt_stringslen;
 	ret		   = of_blob_move_dt_string(blob, len);
@@ -387,13 +365,12 @@ static int of_add_string_strings_blob(void *blob, const char *string, int *name_
 	return 0;
 }
 
-static int of_add_property(void *blob, int nextoffset, const char *property_name, const void *value, int valuelen)
-{
-	int			  string_offset;
+static int of_add_property(void *blob, int nextoffset, const char *property_name, const void *value, int valuelen) {
+	int string_offset;
 	unsigned int *p;
-	unsigned int  addr;
-	int			  len;
-	int			  ret;
+	unsigned int addr;
+	int len;
+	int ret;
 
 	/* check if the property name in the dt_strings,
 	 * else add the string in dt strings
@@ -423,13 +400,12 @@ static int of_add_property(void *blob, int nextoffset, const char *property_name
 	return 0;
 }
 
-static int of_update_property_value(void *blob, int property_offset, const void *value, int valuelen)
-{
-	int			   oldlen;
-	unsigned int	 *plen;
+static int of_update_property_value(void *blob, int property_offset, const void *value, int valuelen) {
+	int oldlen;
+	unsigned int *plen;
 	unsigned char *pvalue;
-	void			 *point;
-	int			   ret;
+	void *point;
+	int ret;
 
 	plen   = (unsigned int *)of_dt_struct_offset(blob, property_offset + 4);
 	pvalue = (unsigned char *)of_dt_struct_offset(blob, property_offset + 12);
@@ -450,8 +426,7 @@ static int of_update_property_value(void *blob, int property_offset, const void 
 	return 0;
 }
 
-static int of_set_property(void *blob, int nodeoffset, const char *property_name, void *value, int valuelen)
-{
+static int of_set_property(void *blob, int nodeoffset, const char *property_name, void *value, int valuelen) {
 	int property_offset;
 	int ret;
 
@@ -480,8 +455,7 @@ static int of_set_property(void *blob, int nodeoffset, const char *property_name
 
 /* ---------------------------------------------------- */
 
-int check_dt_blob_valid(void *blob)
-{
+int check_dt_blob_valid(void *blob) {
 	return ((of_get_magic_number(blob) == OF_DT_MAGIC) && (of_get_format_version(blob) >= 17)) ? 0 : 1;
 }
 
@@ -489,12 +463,11 @@ int check_dt_blob_valid(void *blob)
  * property "bootargs": This zero-terminated string is passed
  * as the kernel command line.
  */
-int fixup_chosen_node(void *blob, char *bootargs)
-{
-	int	  nodeoffset;
-	char *value	   = bootargs;
-	int	  valuelen = strlen(value) + 1;
-	int	  ret;
+int fixup_chosen_node(void *blob, char *bootargs) {
+	int nodeoffset;
+	char *value	 = bootargs;
+	int valuelen = strlen(value) + 1;
+	int ret;
 
 	ret = of_get_node_offset(blob, "chosen", &nodeoffset);
 	if (ret) {
@@ -520,12 +493,11 @@ int fixup_chosen_node(void *blob, char *bootargs)
  * - device_type: has to be "memory".
  * - reg: this property contains all the physical memory ranges of your boards.
  */
-int fixup_memory_node(void *blob, unsigned int *mem_bank, unsigned int *mem_bank2, unsigned int *mem_size)
-{
-	int			 nodeoffset;
+int fixup_memory_node(void *blob, unsigned int *mem_bank, unsigned int *mem_bank2, unsigned int *mem_size) {
+	int nodeoffset;
 	unsigned int data[4];
-	int			 valuelen;
-	int			 ret;
+	int valuelen;
+	int ret;
 
 	ret = of_get_node_offset(blob, "memory", &nodeoffset);
 	if (ret) {

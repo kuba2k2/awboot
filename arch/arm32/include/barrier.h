@@ -20,14 +20,14 @@ extern "C" {
 #endif
 
 /* Read and write memory barrier */
-#define mb() dsb()
+#define mb()  dsb()
 /* Read memory barrier */
 #define rmb() dsb()
 /* Write memory barrier */
 #define wmb() dsb()
 
 /* SMP read and write memory barrier */
-#define smp_mb() dmb()
+#define smp_mb()  dmb()
 /* SMP read memory barrier */
 #define smp_rmb() dmb()
 /* SMP write memory barrier */
