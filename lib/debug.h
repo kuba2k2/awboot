@@ -65,5 +65,7 @@
 	}
 
 void __attribute__((format(printf, 1, 2))) message(const char *fmt, ...);
+void putchar(char c);
+void putstr(char *s);
 
 #endif
