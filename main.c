@@ -104,12 +104,36 @@ _boot:
 	kernel_entry_t kernel_entry = (void *)((unsigned int)zimage_header + zimage_header->start);
 	unsigned int kernel_param	= 0;
 
+	// check if mem= is present in cmdline
+	if (boot_info.cmdline == NULL || strstr(boot_info.cmdline, "mem=") == NULL) {
+		warning("BOOT: 'mem=' missing from cmdline, fixing\r\n");
+		unsigned int size_mb = sdram_size >> 20;
+		if (boot_info.cmdline == NULL) {
+			boot_info.cmdline	 = (void *)CONFIG_SDMMC_CMDLINE_ADDR;
+			boot_info.cmdline[0] = '\0';
+		}
+		char *cmdline = boot_info.cmdline + strlen(boot_info.cmdline);
+		if (cmdline != boot_info.cmdline)
+			*cmdline++ = ' ';
+
+		memcpy(cmdline, "mem=", 4);
+		cmdline += 4;
+		if (size_mb >= 1000)
+			*cmdline++ = '0' + (size_mb / 1000) % 10;
+		if (size_mb >= 100)
+			*cmdline++ = '0' + (size_mb / 100) % 10;
+		*cmdline++ = '0' + (size_mb / 10) % 10;
+		*cmdline++ = '0' + size_mb % 10;
+		*cmdline++ = 'M';
+		*cmdline   = '\0';
+	}
+
 	info("BOOT: command line: %s\r\n", boot_info.cmdline);
 
 	if (boot_info.dtb_addr) {
 		info("BOOT: setting up DTB @ 0x%X\r\n", boot_info.dtb_addr);
 		// setup device tree
-		fixup_chosen_node((void *)boot_info.dtb_addr, (char *)boot_info.cmdline);
+		fixup_chosen_node((void *)boot_info.dtb_addr, boot_info.cmdline);
 		kernel_param = boot_info.dtb_addr;
 	} else if (boot_info.tags_addr) {
 		info("BOOT: setting up legacy ATAGs @ 0x%X\r\n", boot_info.tags_addr);

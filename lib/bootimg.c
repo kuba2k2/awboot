@@ -69,7 +69,7 @@ int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) 
 	boot_info->ramdisk_size = hdr.ramdisk_size;
 	boot_info->dtb_size		= hdr.second_size;
 	boot_info->tags_addr	= hdr.tags_addr;
-	boot_info->cmdline		= (const char *)hdr.cmdline;
+	boot_info->cmdline		= (char *)hdr.cmdline;
 
 	return 0;
 }

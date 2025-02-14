@@ -61,7 +61,7 @@ typedef struct boot_info_t {
 	unsigned int dtb_addr;
 	unsigned int dtb_size;
 	unsigned int tags_addr;
-	const char *cmdline;
+	char *cmdline;
 } boot_info_t;
 
 typedef void (*kernel_entry_t)(int zero, int arch, unsigned int params);
