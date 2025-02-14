@@ -124,6 +124,12 @@ static int sdcard_load_cmdline(boot_info_t *boot_info) {
 		if (read_len <= 0)
 			return -1;
 		boot_info->cmdline = (void *)addr;
+		char *cmdline_end  = boot_info->cmdline + strlen(boot_info->cmdline) - 1;
+		while (cmdline_end >= boot_info->cmdline) {
+			if (*cmdline_end != ' ' && *cmdline_end != '\r' && *cmdline_end != '\n')
+				break;
+			*cmdline_end-- = '\0';
+		}
 		info("FATFS: loaded %s to 0x%X\r\n", CONFIG_SDMMC_CMDLINE_FILENAME, addr);
 	}
 	return 0;

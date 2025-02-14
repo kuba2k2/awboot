@@ -131,9 +131,16 @@ _boot:
 	info("BOOT: command line: %s\r\n", boot_info.cmdline);
 
 	if (boot_info.dtb_addr) {
-		info("BOOT: setting up DTB @ 0x%X\r\n", boot_info.dtb_addr);
+		if (check_dt_blob_valid((void *)boot_info.dtb_addr) != 0)
+			warning("BOOT: invalid DTB found @ 0x%X\r\n", boot_info.dtb_addr);
+		else
+			info("BOOT: setting up DTB @ 0x%X\r\n", boot_info.dtb_addr);
 		// setup device tree
+		unsigned int mem_bank  = SDRAM_BASE;
+		unsigned int mem_bank2 = 0;
+		unsigned int mem_size  = sdram_size;
 		fixup_chosen_node((void *)boot_info.dtb_addr, boot_info.cmdline);
+		fixup_memory_node((void *)boot_info.dtb_addr, &mem_bank, &mem_bank2, &mem_size);
 		kernel_param = boot_info.dtb_addr;
 	} else if (boot_info.tags_addr) {
 		info("BOOT: setting up legacy ATAGs @ 0x%X\r\n", boot_info.tags_addr);
