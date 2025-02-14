@@ -18,6 +18,7 @@
 #ifndef _BOOT_IMAGE_H_
 #define _BOOT_IMAGE_H_
 
+typedef struct boot_info_t boot_info_t;
 typedef struct boot_img_hdr boot_img_hdr;
 
 #define BOOT_MAGIC		"ANDROID!"
@@ -77,6 +78,6 @@ struct boot_img_hdr {
 
 typedef int (*boot_img_read_func)(void *param, void *buf, unsigned int len);
 
-int boot_img_load(boot_img_read_func func, void *param, unsigned int *kernel_entry, unsigned int *kernel_param);
+int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info);
 
 #endif

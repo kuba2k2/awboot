@@ -1,30 +1,15 @@
 #include "main.h"
 
 #include "arm32.h"
+#include "atag.h"
 #include "barrier.h"
 #include "board.h"
 #include "console.h"
 #include "debug.h"
 #include "fdt.h"
-#include "ff.h"
-#include "sdmmc.h"
 #include "sunxi_clk.h"
-#include "sunxi_dma.h"
-#include "sunxi_gpio.h"
-#include "sunxi_sdhci.h"
-#include "sunxi_spi.h"
 
 unsigned long sdram_size;
-
-/* Linux zImage Header */
-#define LINUX_ZIMAGE_MAGIC 0x016f2818
-
-typedef struct {
-	unsigned int code[9];
-	unsigned int magic;
-	unsigned int start;
-	unsigned int end;
-} linux_zimage_header_t;
 
 static int boot_image_setup(unsigned char *addr, unsigned int *entry) {
 	linux_zimage_header_t *zimage_header = (linux_zimage_header_t *)addr;
@@ -40,8 +25,6 @@ static int boot_image_setup(unsigned char *addr, unsigned int *entry) {
 }
 
 int main(void) {
-	linux_zimage_header_t *zimage_header;
-
 	board_init();
 	sunxi_clk_init();
 
@@ -63,56 +46,74 @@ int main(void) {
 	console_handler(CONSOLE_NO_TIMEOUT);
 #endif
 
-	void (*kernel_entry)(int zero, int arch, unsigned int params);
-	unsigned int kernel_param;
-
 #ifdef CONFIG_ENABLE_CPU_FREQ_DUMP
 	sunxi_clk_dump();
 #endif
 
+	boot_info_t boot_info;
+	memset(&boot_info, 0, sizeof(boot_info));
+
 #ifdef CONFIG_BOOT_FEL
-	if (load_fel(&kernel_entry, &kernel_param) == 0)
+	if (load_fel(&boot_info) == 0)
 		goto _boot;
 	else
-		warning("BOOT: FEL boot failed\r\n");
+		warning("BOOT: FEL boot failed (0x%08X)\r\n", CONFIG_BOOT_IMG_ADDR_FEL);
 #endif
 
 #ifdef CONFIG_BOOT_SDCARD
-	if (load_sdcard(&kernel_entry, &kernel_param) == 0)
+	if (load_sdcard(&boot_info) == 0)
 		goto _boot;
 	else
-		warning("BOOT: SD card boot failed\r\n");
+		warning("BOOT: SD card boot failed (%s)\r\n", CONFIG_BOOT_IMG_FILENAME);
 #endif
 
 #ifdef CONFIG_BOOT_SPINAND
-	if (load_spinand(&kernel_entry, &kernel_param) == 0)
+	if (load_spinand(&boot_info) == 0)
 		goto _boot;
 	else
-		warning("BOOT: SPI-NAND boot failed\r\n");
+		warning("BOOT: SPI-NAND boot failed (0x%X)\r\n", CONFIG_BOOT_IMG_ADDR_SPINAND);
 #endif
 
 #ifdef CONFIG_BOOT_SPINOR
-	if (load_spinor(&kernel_entry, &kernel_param) == 0)
+	if (load_spinor(&boot_info) == 0)
 		goto _boot;
 	else
-		warning("BOOT: SPI-NOR boot failed\r\n");
+		warning("BOOT: SPI-NOR boot failed (0x%X)\r\n", CONFIG_BOOT_IMG_ADDR_SPINOR);
 #endif
 
 	fatal("BOOT: all boot options failed\r\n");
 
 _boot:
 
-	zimage_header = (linux_zimage_header_t *)kernel_entry;
-	if (zimage_header->magic != LINUX_ZIMAGE_MAGIC) {
-		fatal("unsupported kernel image\r\n");
+	if (boot_info.kernel_addr == 0)
+		fatal("BOOT: kernel address is NULL\r\n");
+	info("BOOT: kernel @ 0x%X, ramdisk @ 0x%X\r\n", boot_info.kernel_addr, boot_info.ramdisk_addr);
+
+	linux_zimage_header_t *zimage_header = (linux_zimage_header_t *)boot_info.kernel_addr;
+	if (zimage_header->magic != LINUX_ZIMAGE_MAGIC)
+		fatal("BOOT: invalid kernel image magic\r\n");
+
+	kernel_entry_t kernel_entry = (void *)((unsigned int)zimage_header + zimage_header->start);
+	unsigned int kernel_param	= 0;
+
+	if (boot_info.dtb_addr) {
+		info("BOOT: setting up DTB @ 0x%X\r\n", boot_info.dtb_addr);
+		// setup device tree
+		fixup_chosen_node((void *)boot_info.dtb_addr, (char *)boot_info.cmdline);
+		kernel_param = boot_info.dtb_addr;
+	} else if (boot_info.tags_addr) {
+		info("BOOT: setting up legacy ATAGs @ 0x%X\r\n", boot_info.tags_addr);
+		// setup atags
+		setup_core_tag((void *)boot_info.tags_addr, 4096);
+		setup_mem_tag(SDRAM_BASE, sdram_size);
+		setup_ramdisk_tag(16 * 1024);
+		if (boot_info.ramdisk_addr)
+			setup_initrd2_tag(boot_info.ramdisk_addr, boot_info.ramdisk_size);
+		if (boot_info.cmdline)
+			setup_cmdline_tag(boot_info.cmdline);
+		setup_end_tag();
+		kernel_param = boot_info.tags_addr;
 	}
-
-#ifdef CONFIG_CMD_LINE_ARGS
-	info("setup bootargs: %s\r\n", CONFIG_CMD_LINE_ARGS);
-	fixup_chosen_node(image.of_dest, CONFIG_CMD_LINE_ARGS);
-#endif
-
-	kernel_entry = (void *)((unsigned int)kernel_entry + zimage_header->start);
 
 	info("BOOT: booting Linux @ 0x%x\r\n", (unsigned int)kernel_entry);
 

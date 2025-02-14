@@ -2,7 +2,6 @@
 
 #include "main.h"
 
-#include "atag.h"
 #include "dram.h"
 
 #define READ(buf, len)                            \
@@ -13,7 +12,7 @@
 		}                                         \
 	} while (0)
 
-int boot_img_load(boot_img_read_func func, void *param, unsigned int *kernel_entry, unsigned int *kernel_param) {
+int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) {
 	boot_img_hdr hdr;
 	unsigned char *buf;
 	unsigned int page_size = CONFIG_BOOT_IMG_BUF_SIZE;
@@ -57,19 +56,20 @@ int boot_img_load(boot_img_read_func func, void *param, unsigned int *kernel_ent
 	if (second_pages)
 		READ((void *)hdr.second_addr, second_pages * page_size);
 
-	// setup atags
-	setup_core_tag((void *)hdr.tags_addr, 4096);
-	setup_mem_tag(SDRAM_BASE, sdram_size);
-	setup_ramdisk_tag(16 * 1024);
-	setup_initrd2_tag(hdr.ramdisk_addr, hdr.ramdisk_size);
-	setup_cmdline_tag((const char *)hdr.cmdline);
-	setup_end_tag();
+	info("BOOTIMG: load successful\r\n");
 
 	// write outputs
-	*kernel_entry = hdr.kernel_addr;
-	*kernel_param = hdr.tags_addr;
-
-	info("BOOTIMG: kernel @ 0x%x, atags @ 0x%x\r\n", *kernel_entry, *kernel_param);
+	if (hdr.kernel_size)
+		boot_info->kernel_addr = hdr.kernel_addr;
+	if (hdr.ramdisk_size)
+		boot_info->ramdisk_addr = hdr.ramdisk_addr;
+	if (hdr.second_size)
+		boot_info->dtb_addr = hdr.second_addr;
+	boot_info->kernel_size	= hdr.kernel_size;
+	boot_info->ramdisk_size = hdr.ramdisk_size;
+	boot_info->dtb_size		= hdr.second_size;
+	boot_info->tags_addr	= hdr.tags_addr;
+	boot_info->cmdline		= (const char *)hdr.cmdline;
 
 	return 0;
 }

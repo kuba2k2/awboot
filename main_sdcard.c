@@ -42,7 +42,7 @@ static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len) {
 	return total_read;
 }
 
-int load_sdcard(void *kernel_entry, void *kernel_param) {
+int load_sdcard(boot_info_t *boot_info) {
 	int ret;
 	FATFS fs;
 	FIL file;
@@ -92,7 +92,7 @@ int load_sdcard(void *kernel_entry, void *kernel_param) {
 	debug("FATFS: open OK\r\n");
 
 	// load boot.img
-	ret = boot_img_load((boot_img_read_func)sdcard_read_func, &file, kernel_entry, kernel_param);
+	ret = boot_img_load((boot_img_read_func)sdcard_read_func, &file, boot_info);
 	if (ret != 0) {
 		warning("SMHC: loading failed\r\n");
 		return -6;

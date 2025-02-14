@@ -19,7 +19,7 @@ static int spinor_read_func(unsigned int *addr, void *buf, unsigned int len) {
 	return len;
 }
 
-int load_spinor(void *kernel_entry, void *kernel_param) {
+int load_spinor(boot_info_t *boot_info) {
 	dma_init();
 	dma_test();
 	debug("SPI: init\r\n");
@@ -34,5 +34,5 @@ int load_spinor(void *kernel_entry, void *kernel_param) {
 
 	spinor_addr = CONFIG_BOOT_IMG_ADDR_SPINOR;
 	debug("SPI-NOR: boot.img address = 0x%x\r\n", spinor_addr);
-	return boot_img_load((boot_img_read_func)spinor_read_func, &spinor_addr, kernel_entry, kernel_param);
+	return boot_img_load((boot_img_read_func)spinor_read_func, &spinor_addr, boot_info);
 }
