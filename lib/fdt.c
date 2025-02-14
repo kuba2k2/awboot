@@ -533,3 +533,111 @@ int fixup_memory_node(void *blob, unsigned int *mem_bank, unsigned int *mem_bank
 
 	return 0;
 }
+
+int dump_dt_blob(void *blob) {
+	int nextnode  = 0;
+	int depth	  = 0;
+	int prevdepth = 0;
+	unsigned int token;
+	int ret;
+
+	ret = of_get_token_nextoffset(blob, 0, &nextnode, &token);
+	if (ret)
+		return -1;
+
+	putstr("/dts-v1/;\r\n\r\n/ {\r\n");
+
+	while (1) {
+		int nextprop = nextnode;
+		while (1) {
+			int propoffset;
+			ret = of_get_next_property_offset(blob, nextprop, &propoffset, &nextprop);
+			if (ret)
+				break;
+
+			unsigned int *sizeoffset = (void *)(of_dt_struct_offset(blob, propoffset) + 4);
+			unsigned int *nameoffset = (void *)(of_dt_struct_offset(blob, propoffset) + 8);
+			char *value				 = (void *)(of_dt_struct_offset(blob, propoffset) + 12);
+
+			unsigned int propsize = swap_uint32(*sizeoffset);
+			char *propname		  = of_get_string_by_offset(blob, swap_uint32(*nameoffset));
+
+			int is_string = 0;
+			if (value[propsize - 1] == '\0') {
+				for (int i = 0; i < propsize - 1; i++) {
+					if (value[i] != '\0')
+						is_string = 1;
+					if (value[i] != '\0' && !(value[i] >= 0x20 && value[i] <= 0x7E)) {
+						is_string = 0;
+						break;
+					}
+				}
+			}
+
+			for (int i = 0; i < depth + 1; i++) {
+				putchar('\t');
+			}
+			message("%s", propname);
+
+			if (is_string) {
+				putstr(" = \"");
+				for (int i = 0; i < propsize - 1; i++) {
+					if (value[i] == '\0')
+						putstr("\", \"");
+					else
+						putchar(value[i]);
+				}
+				putchar('"');
+			} else if (propsize && propsize % 4 == 0) {
+				putstr(" = <");
+				unsigned int *value32 = (void *)value;
+				for (int i = 0; i < propsize / 4; i++) {
+					if (i)
+						putchar(' ');
+					message("0x%x", swap_uint32(value32[i]));
+				}
+				putchar('>');
+			} else if (propsize) {
+				message("...size %d...", propsize);
+			}
+			putstr(";\r\n");
+		}
+
+		int nodeoffset;
+		ret = of_get_nextnode_offset(blob, nextnode, &nodeoffset, &nextnode, &depth);
+		if (ret)
+			break;
+		if (depth < 0)
+			break;
+		char *nodename = (void *)(of_dt_struct_offset(blob, nodeoffset) + 4);
+
+		if (depth <= prevdepth) {
+			int num = prevdepth - depth + 1;
+			for (int j = 0; j < num; j++) {
+				for (int i = 0; i < prevdepth; i++) {
+					putchar('\t');
+				}
+				putstr("};\r\n");
+				prevdepth--;
+			}
+		}
+		prevdepth = depth;
+
+		putstr("\r\n");
+		for (int i = 0; i < depth; i++) {
+			putchar('\t');
+		}
+		message("%s {\r\n", nodename);
+	}
+
+	int num = prevdepth + 1;
+	for (int j = 0; j < num; j++) {
+		for (int i = 0; i < prevdepth; i++) {
+			putchar('\t');
+		}
+		putstr("};\r\n");
+		prevdepth--;
+	}
+
+	return 0;
+}

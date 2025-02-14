@@ -26,9 +26,11 @@ typedef struct {
 	unsigned int dt_struct_len;
 } boot_param_header_t;
 
-extern unsigned int of_get_dt_total_size(void *blob);
-extern unsigned int of_get_magic_number(void *blob);
-extern int check_dt_blob_valid(void *blob);
-extern int fixup_chosen_node(void *blob, char *bootargs);
-extern int fixup_memory_node(void *blob, unsigned int *mem_bank, unsigned int *mem_bank2, unsigned int *mem_size);
+unsigned int of_get_dt_total_size(void *blob);
+unsigned int of_get_magic_number(void *blob);
+
+int check_dt_blob_valid(void *blob);
+int fixup_chosen_node(void *blob, char *bootargs);
+int fixup_memory_node(void *blob, unsigned int *mem_bank, unsigned int *mem_bank2, unsigned int *mem_size);
+int dump_dt_blob(void *blob);
 #endif /* #ifndef __FDT_H__ */
