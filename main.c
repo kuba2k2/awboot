@@ -53,6 +53,7 @@ int main(void) {
 	boot_info_t boot_info;
 	memset(&boot_info, 0, sizeof(boot_info));
 
+	// boot from FEL
 #ifdef CONFIG_BOOT_FEL
 	if (load_fel(&boot_info) == 0)
 		goto _boot;
@@ -60,6 +61,7 @@ int main(void) {
 		warning("BOOT: FEL boot failed (0x%08X)\r\n", CONFIG_BOOT_IMG_ADDR_FEL);
 #endif
 
+	// boot from SD card
 #ifdef CONFIG_BOOT_SDCARD
 	if (load_sdcard(&boot_info) == 0)
 		goto _boot;
@@ -67,6 +69,7 @@ int main(void) {
 		warning("BOOT: SD card boot failed (%s)\r\n", CONFIG_BOOT_IMG_FILENAME);
 #endif
 
+	// boot from SPI NAND
 #ifdef CONFIG_BOOT_SPINAND
 	if (load_spinand(&boot_info) == 0)
 		goto _boot;
@@ -74,6 +77,7 @@ int main(void) {
 		warning("BOOT: SPI-NAND boot failed (0x%X)\r\n", CONFIG_BOOT_IMG_ADDR_SPINAND);
 #endif
 
+	// boot from SPI NOR
 #ifdef CONFIG_BOOT_SPINOR
 	if (load_spinor(&boot_info) == 0)
 		goto _boot;
@@ -81,20 +85,26 @@ int main(void) {
 		warning("BOOT: SPI-NOR boot failed (0x%X)\r\n", CONFIG_BOOT_IMG_ADDR_SPINOR);
 #endif
 
+	// fail if all boot options failed
 	fatal("BOOT: all boot options failed\r\n");
+	while (1) {}
 
 _boot:
-
+	// check if kernel address was set
 	if (boot_info.kernel_addr == 0)
 		fatal("BOOT: kernel address is NULL\r\n");
 	info("BOOT: kernel @ 0x%X, ramdisk @ 0x%X\r\n", boot_info.kernel_addr, boot_info.ramdisk_addr);
 
+	// verify zImage header
 	linux_zimage_header_t *zimage_header = (linux_zimage_header_t *)boot_info.kernel_addr;
 	if (zimage_header->magic != LINUX_ZIMAGE_MAGIC)
 		fatal("BOOT: invalid kernel image magic\r\n");
 
+	// calculate kernel entry point
 	kernel_entry_t kernel_entry = (void *)((unsigned int)zimage_header + zimage_header->start);
 	unsigned int kernel_param	= 0;
+
+	info("BOOT: command line: %s\r\n", boot_info.cmdline);
 
 	if (boot_info.dtb_addr) {
 		info("BOOT: setting up DTB @ 0x%X\r\n", boot_info.dtb_addr);

@@ -17,12 +17,12 @@ static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len) {
 	start = time_ms();
 
 	do {
-		byte_to_read = min(CHUNK_SIZE, len - total_read);
+		byte_to_read = len ? min(CHUNK_SIZE, len - total_read) : CHUNK_SIZE;
 		byte_read	 = 0;
 		fret		 = f_read(file, (void *)buf, byte_to_read, &byte_read);
 		buf += byte_to_read;
 		total_read += byte_read;
-	} while (byte_read >= byte_to_read && total_read < len && fret == FR_OK);
+	} while (byte_read >= byte_to_read && (len == 0 || total_read < len) && fret == FR_OK);
 
 	time = time_ms() - start + 1;
 
@@ -42,10 +42,96 @@ static int sdcard_read_func(FIL *file, unsigned char *buf, unsigned int len) {
 	return total_read;
 }
 
+static int sdcard_open(FIL *file, const char *filename) {
+	FRESULT fret;
+
+	fret = f_open(file, filename, FA_OPEN_EXISTING | FA_READ);
+	if (fret != FR_OK) {
+		warning("FATFS: open, filename: [%s]: error %d\r\n", filename, fret);
+		return -1;
+	}
+	debug("FATFS: open OK, filename: [%s]\r\n", filename);
+	return 0;
+}
+
+static int sdcard_load_boot_img(boot_info_t *boot_info) {
+	int ret;
+	FIL file;
+
+	if ((ret = sdcard_open(&file, CONFIG_BOOT_IMG_FILENAME)) != 0)
+		return ret;
+
+	ret = boot_img_load((boot_img_read_func)sdcard_read_func, &file, boot_info);
+	f_close(&file);
+	if (ret == 0)
+		info("FATFS: loaded %s\r\n", CONFIG_BOOT_IMG_FILENAME);
+	return ret;
+}
+
+static int sdcard_load_kernel(boot_info_t *boot_info) {
+	int ret;
+	FIL file;
+	if ((ret = sdcard_open(&file, CONFIG_SDMMC_KERNEL_FILENAME)) == 0) {
+		unsigned int addr = CONFIG_SDMMC_KERNEL_ADDR;
+		int read_len	  = sdcard_read_func(&file, (void *)addr, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+		boot_info->kernel_addr = addr;
+		boot_info->kernel_size = read_len;
+		boot_info->tags_addr   = CONFIG_SDMMC_ATAG_ADDR;
+		info("FATFS: loaded %s to 0x%X\r\n", CONFIG_SDMMC_KERNEL_FILENAME, addr);
+	}
+	return ret;
+}
+
+static int sdcard_load_ramdisk(boot_info_t *boot_info) {
+	FIL file;
+	if (sdcard_open(&file, CONFIG_SDMMC_RAMDISK_FILENAME) == 0) {
+		unsigned int addr = boot_info->ramdisk_addr ? boot_info->ramdisk_addr : CONFIG_SDMMC_RAMDISK_ADDR;
+		int read_len	  = sdcard_read_func(&file, (void *)addr, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+		boot_info->ramdisk_addr = addr;
+		boot_info->ramdisk_size = read_len;
+		info("FATFS: loaded %s to 0x%X\r\n", CONFIG_SDMMC_RAMDISK_FILENAME, addr);
+	}
+	return 0;
+}
+
+static int sdcard_load_dtb(boot_info_t *boot_info) {
+	FIL file;
+	if (sdcard_open(&file, CONFIG_SDMMC_DTB_FILENAME) == 0) {
+		unsigned int addr = boot_info->dtb_addr ? boot_info->dtb_addr : CONFIG_SDMMC_DTB_ADDR;
+		int read_len	  = sdcard_read_func(&file, (void *)addr, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+		boot_info->dtb_addr = addr;
+		boot_info->dtb_size = read_len;
+		info("FATFS: loaded %s to 0x%X\r\n", CONFIG_SDMMC_DTB_FILENAME, addr);
+	}
+	return 0;
+}
+
+static int sdcard_load_cmdline(boot_info_t *boot_info) {
+	FIL file;
+	if (sdcard_open(&file, CONFIG_SDMMC_CMDLINE_FILENAME) == 0) {
+		unsigned int addr = boot_info->cmdline ? (unsigned int)boot_info->cmdline : CONFIG_SDMMC_CMDLINE_ADDR;
+		int read_len	  = sdcard_read_func(&file, (void *)addr, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+		boot_info->cmdline = (void *)addr;
+		info("FATFS: loaded %s to 0x%X\r\n", CONFIG_SDMMC_CMDLINE_FILENAME, addr);
+	}
+	return 0;
+}
+
 int load_sdcard(boot_info_t *boot_info) {
 	int ret;
 	FATFS fs;
-	FIL file;
 	FRESULT fret;
 	u32 UNUSED_DEBUG start;
 
@@ -83,21 +169,40 @@ int load_sdcard(boot_info_t *boot_info) {
 	}
 	debug("FATFS: mount OK\r\n");
 
-	// open file
-	fret = f_open(&file, CONFIG_BOOT_IMG_FILENAME, FA_OPEN_EXISTING | FA_READ);
-	if (fret != FR_OK) {
-		error("FATFS: open, filename: [%s]: error %d\r\n", CONFIG_BOOT_IMG_FILENAME, fret);
-		return -4;
-	}
-	debug("FATFS: open OK\r\n");
+	// try boot.img first
+	if ((ret = sdcard_load_boot_img(boot_info)) == 0)
+		goto _load_ok;
 
-	// load boot.img
-	ret = boot_img_load((boot_img_read_func)sdcard_read_func, &file, boot_info);
-	if (ret != 0) {
-		warning("SMHC: loading failed\r\n");
-		return -6;
-	}
+	// try zImage if boot.img fails
+	if ((ret = sdcard_load_kernel(boot_info)) == 0)
+		goto _load_ok;
 
+	// exit if all load methods fail
+	goto _out;
+
+_load_ok:
+#ifndef CONFIG_SDMMC_OVERRIDE_RAMDISK
+	if (boot_info->ramdisk_addr == 0)
+#endif
+		// override ramdisk from file
+		if ((ret = sdcard_load_ramdisk(boot_info)) != 0)
+			goto _out;
+
+#ifndef CONFIG_SDMMC_OVERRIDE_DTB
+	if (boot_info->dtb_addr == 0)
+#endif
+		// override dtb from file
+		if ((ret = sdcard_load_dtb(boot_info)) != 0)
+			goto _out;
+
+#ifndef CONFIG_SDMMC_OVERRIDE_CMDLINE
+	if (boot_info->cmdline == NULL)
+#endif
+		// override cmdline from file
+		if ((ret = sdcard_load_cmdline(boot_info)) != 0)
+			goto _out;
+
+_out:
 	// unmount filesystem
 	fret = f_mount(0, "", 0);
 	if (fret != FR_OK) {
@@ -107,9 +212,9 @@ int load_sdcard(boot_info_t *boot_info) {
 	debug("FATFS: unmount OK\r\n");
 
 	if (ret == 0)
-		debug("FATFS: done in %" PRIu32 "ms\r\n", time_ms() - start);
+		info("FATFS: done in %" PRIu32 "ms\r\n", time_ms() - start);
 	else
-		warning("SMHC: loading failed\r\n");
+		warning("FATFS: loading failed\r\n");
 
-	return 0;
+	return ret;
 }
