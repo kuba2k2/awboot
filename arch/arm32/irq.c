@@ -86,25 +86,25 @@ static void show_regs(struct arm_regs_t *regs) {
 
 void arm32_do_undefined_instruction(struct arm_regs_t *regs) {
 	show_regs(regs);
-	debug("%s\r\n", __FUNCTION__);
+	fatal("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
 void arm32_do_software_interrupt(struct arm_regs_t *regs) {
 	show_regs(regs);
-	debug("%s\r\n", __FUNCTION__);
+	fatal("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
 void arm32_do_prefetch_abort(struct arm_regs_t *regs) {
 	show_regs(regs);
-	debug("%s\r\n", __FUNCTION__);
+	fatal("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
 void arm32_do_data_abort(struct arm_regs_t *regs) {
 	show_regs(regs);
-	debug("%s\r\n", __FUNCTION__);
+	fatal("%s\r\n", __FUNCTION__);
 	regs->pc += 4;
 }
 
