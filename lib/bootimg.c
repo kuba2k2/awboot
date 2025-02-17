@@ -55,6 +55,8 @@ int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) 
 		READ((void *)hdr.ramdisk_addr, ramdisk_pages * page_size);
 	if (second_pages)
 		READ((void *)hdr.second_addr, second_pages * page_size);
+	// copy command line
+	memcpy((void *)CONFIG_SDMMC_CMDLINE_ADDR, hdr.cmdline, sizeof(hdr.cmdline));
 
 	info("BOOTIMG: load successful\r\n");
 
@@ -69,7 +71,7 @@ int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) 
 	boot_info->ramdisk_size = hdr.ramdisk_size;
 	boot_info->dtb_size		= hdr.second_size;
 	boot_info->tags_addr	= hdr.tags_addr;
-	boot_info->cmdline		= (char *)hdr.cmdline;
+	boot_info->cmdline		= (void *)CONFIG_SDMMC_CMDLINE_ADDR;
 
 	return 0;
 }
