@@ -61,7 +61,7 @@
 	{                                                                                   \
 		message(ANSI_MAGENTA "[F] " ANSI_RESET fmt "restarting...\r\n", ##__VA_ARGS__); \
 		mdelay(100);                                                                    \
-		reset();                                                                        \
+		reset_cpu();                                                                    \
 	}
 
 void __attribute__((format(printf, 1, 2))) message(const char *fmt, ...);

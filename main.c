@@ -167,3 +167,12 @@ _boot:
 
 	return 0;
 }
+
+void reset_cpu() {
+	arm32_interrupt_disable();
+	// WDOG_MODE_REG
+	uint32_t *reg = (void *)(0x2050000 + 0xB8);
+	// WDOG_EN = 1
+	*reg = 0x16AA0001;
+	while (1) {}
+}

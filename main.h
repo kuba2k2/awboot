@@ -72,6 +72,7 @@ void sdelay(uint32_t loops);
 uint32_t time_ms(void);
 uint64_t time_us(void);
 void reset();
+void reset_cpu();
 
 int load_fel(boot_info_t *boot_info);
 int load_sdcard(boot_info_t *boot_info);

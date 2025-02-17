@@ -46,7 +46,7 @@ begin:
 	@echo -n "Compiler version: "
 	@$(CC) -v 2>&1 | tail -1
 
-.PHONY: all clean
+.PHONY: all clean tools
 .SILENT:
 
 build: $(OBJ_DIR)/$(TARGET)-boot.bin $(OBJ_DIR)/$(TARGET)-fel.bin
