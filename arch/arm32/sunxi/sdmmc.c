@@ -613,7 +613,6 @@ static bool sdmmc_detect(sdhci_t *hci, sdmmc_t *card) {
 		card->capacity = (csize + 1) << (cmult + 2);
 	}
 	card->capacity *= 1 << UNSTUFF_BITS(card->csd, 80, 4);
-	debug("SMHC: capacity %.1fGB\r\n", (f32)((f64)card->capacity / (f64)1000000000.0));
 
 	if (hci->isspi) {
 		if (!sdhci_set_clock(hci, min(card->tran_speed, hci->clock)) || !sdhci_set_width(hci, MMC_BUS_WIDTH_1)) {
@@ -714,7 +713,11 @@ int sdmmc_init(sdmmc_pdata_t *data, sdhci_t *hci) {
 
 	do {
 		if (sdmmc_detect(data->hci, &data->card) == TRUE) {
-			info("SHMC: %s card detected\r\n", data->card.version & SD_VERSION_SD ? "SD" : "MMC");
+			info(
+				"SHMC: %s card detected, capacity %d MiB\r\n",
+				data->card.version & SD_VERSION_SD ? "SD" : "MMC",
+				(unsigned int)(data->card.capacity / 1000000)
+			);
 			return 0;
 		}
 		mdelay(100);
