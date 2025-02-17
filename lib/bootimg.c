@@ -15,7 +15,7 @@
 int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) {
 	boot_img_hdr hdr;
 	unsigned char *buf;
-	unsigned int page_size = CONFIG_BOOT_IMG_BUF_SIZE;
+	unsigned int page_size = CONFIG_LOAD_BUF_SIZE;
 	unsigned int kernel_pages, ramdisk_pages, second_pages;
 
 	READ(&hdr, sizeof(hdr));
@@ -31,7 +31,7 @@ int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) 
 	}
 
 	// skip the 1st page
-	buf		  = (void *)CONFIG_BOOT_IMG_BUF_ADDR;
+	buf		  = (void *)CONFIG_LOAD_BUF_ADDR;
 	page_size = hdr.page_size;
 	memset(buf, 0, page_size);
 	READ(buf, page_size - sizeof(hdr));

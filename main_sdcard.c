@@ -2,6 +2,7 @@
 
 #include "bootimg.h"
 #include "ff.h"
+#include "libfdt.h"
 #include "sdmmc.h"
 #include "sunxi_sdhci.h"
 
@@ -137,6 +138,77 @@ static int sdcard_load_cmdline(boot_info_t *boot_info) {
 	return 0;
 }
 
+#ifdef CONFIG_SDMMC_OVERLAY_SUPPORT
+static int sdcard_load_overlay(boot_info_t *boot_info, const char *filename, void *buf) {
+	void *fdt = (void *)boot_info->dtb_addr;
+	FIL file;
+	int ret;
+	if (sdcard_open(&file, filename) == 0) {
+		int read_len = sdcard_read_func(&file, buf, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+
+		if ((ret = fdt_check_header(buf)) != 0)
+			goto err;
+
+		if ((ret = fdt_overlay_apply(fdt, buf)) != 0)
+			goto err;
+	}
+	return 0;
+
+err:
+	error("FDT: cannot apply overlay, ret: %d\r\n", ret);
+	return ret;
+}
+
+static int sdcard_load_overlays(boot_info_t *boot_info) {
+	void *fdt = (void *)boot_info->dtb_addr;
+	FIL file;
+	if (sdcard_open(&file, CONFIG_SDMMC_DTBO_FILENAME) == 0) {
+		char *overlays = (void *)CONFIG_LOAD_BUF_ADDR;
+		int read_len   = sdcard_read_func(&file, (void *)overlays, 0);
+		f_close(&file);
+		if (read_len <= 0)
+			return -1;
+		overlays[read_len] = '\0';
+		char *filename	   = overlays + read_len + 1;
+		void *buf		   = (void *)((((unsigned int)filename + 256) / 8 + 1) * 8);
+
+		fdt_set_totalsize(fdt, fdt_totalsize(fdt) + 0x1000); // resize to add new nodes
+		memcpy(filename, CONFIG_SDMMC_DTBO_DIRNAME "/", sizeof(CONFIG_SDMMC_DTBO_DIRNAME));
+
+		char *overlay = overlays;
+		do {
+			char *next = strchr(overlay, '\n');
+			if (next) {
+				if (*(next - 1) == '\r')
+					*(next - 1) = '\0';
+				*next++ = '\0';
+			}
+			if (*overlay == '\0' || *overlay == '#') {
+				if (!next)
+					break;
+				overlay = next;
+				continue;
+			}
+
+			strcpy(filename + sizeof(CONFIG_SDMMC_DTBO_DIRNAME), overlay);
+			info("FDT: applying device tree overlay '%s'\r\n", filename);
+
+			int ret;
+			if ((ret = sdcard_load_overlay(boot_info, filename, buf)) != 0)
+				return ret;
+
+			overlay = next;
+		} while (overlay);
+
+		fdt_pack(fdt);
+	}
+	return 0;
+}
+#endif
+
 int load_sdcard(boot_info_t *boot_info) {
 	int ret;
 	FATFS fs;
@@ -209,6 +281,13 @@ _load_ok:
 		// override cmdline from file
 		if ((ret = sdcard_load_cmdline(boot_info)) != 0)
 			goto _out;
+
+#ifdef CONFIG_SDMMC_OVERLAY_SUPPORT
+	if (boot_info->dtb_addr != 0)
+		// load device tree overlays
+		if ((ret = sdcard_load_overlays(boot_info)) != 0)
+			goto _out;
+#endif
 
 _out:
 	// unmount filesystem
