@@ -29,8 +29,8 @@
 
 // override parts of boot.img with standalone files
 // #define CONFIG_SDMMC_OVERRIDE_RAMDISK
-#define CONFIG_SDMMC_OVERRIDE_DTB
-#define CONFIG_SDMMC_OVERRIDE_CMDLINE
+// #define CONFIG_SDMMC_OVERRIDE_DTB
+// #define CONFIG_SDMMC_OVERRIDE_CMDLINE
 
 // only used in dma_test()
 #define CONFIG_DTB_LOAD_ADDR	(CONFIG_FATFS_CACHE_ADDR - (512 * 1024))
