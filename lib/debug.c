@@ -17,7 +17,7 @@ void putchar(char c) {
 	sunxi_usart_putc(&USART_DBG, c);
 }
 
-void putstr(char *s) {
+void putstr(const char *s) {
 	char c;
 	while ((c = *s++)) {
 		sunxi_usart_putc(&USART_DBG, c);
