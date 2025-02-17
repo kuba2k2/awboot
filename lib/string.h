@@ -21,5 +21,6 @@ extern int strncmp(const char *p1, const char *p2, unsigned long cnt);
 extern char *strstr(const char *s, const char *what);
 extern void *memchr(const void *ptr, int value, unsigned long num);
 extern void *memmove(void *dest, const void *src, unsigned long count);
+extern unsigned long strtoul(const char *nptr, char **endptr, register int base);
 
 #endif /* #ifndef __STRING_H__ */

@@ -6,18 +6,10 @@
 #include "strtok.h"
 #include "sunxi_usart.h"
 
-extern uint32_t get_sys_ticks(void);
-
 console_t console;
 
-static void cmd_echo(unsigned char argc, char **argv);
-
-const cmd_t cmd_tbl[] = {
-	{"echo", cmd_echo},
-	{NULL,   NULL	   }
-};
-
 uint32_t get_sys_ticks(void);
+void console_register_commands();
 
 static void cmd_menu() {
 	message("awboot> ");
@@ -37,9 +29,9 @@ static int8_t cmd_parse(char *cmd) {
 
 	argc = i;
 
-	for (i = 0; cmd_tbl[i].cmd != NULL; i++) {
-		if (!strcmp(argv[0], cmd_tbl[i].cmd)) {
-			cmd_tbl[i].func(argc, argv);
+	for (i = 0; i < CONSOLE_COMMAND_NUM && console.cmd_tbl[i].cmd != NULL; i++) {
+		if (!strcmp(argv[0], console.cmd_tbl[i].cmd)) {
+			console.cmd_tbl[i].func(argc, argv);
 			cmd_menu();
 			return 0;
 		}
@@ -52,8 +44,11 @@ static int8_t cmd_parse(char *cmd) {
 }
 
 void console_init(sunxi_usart_t *usart) {
-	console.cmd_ptr = console.cmd;
+	memset(&console, 0, sizeof(console));
 	console.usart	= usart;
+	console.cmd_ptr = console.cmd;
+
+	console_register_commands();
 
 	message("\r\n");
 	cmd_menu();
@@ -123,6 +118,15 @@ void console_handler(uint32_t timeout) {
 	}
 }
 
-static void cmd_echo(unsigned char argc, char **argv) {
-	message("%s\r\n", argv[1]);
+void console_add_command(char *cmd, void (*func)(unsigned char argc, char **argv), char *args, char *help) {
+	int i;
+	for (i = 0; i < CONSOLE_COMMAND_NUM; i++) {
+		if (console.cmd_tbl[i].cmd != NULL)
+			continue;
+		console.cmd_tbl[i].cmd	= cmd;
+		console.cmd_tbl[i].func = func;
+		console.cmd_tbl[i].args = args;
+		console.cmd_tbl[i].help = help;
+		break;
+	}
 }

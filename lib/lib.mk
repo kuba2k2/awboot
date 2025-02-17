@@ -16,6 +16,7 @@ SRCS	+=  $(LIB)/atag.c
 SRCS	+=  $(LIB)/bootimg.c
 SRCS	+=  $(LIB)/debug.c
 SRCS	+=  $(LIB)/console.c
+SRCS	+=  $(LIB)/console_cmds.c
 SRCS	+=  $(LIB)/fdt.c
 SRCS	+=  $(LIB)/ringbuffer.c
 SRCS	+=  $(LIB)/string.c
