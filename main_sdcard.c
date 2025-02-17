@@ -123,8 +123,10 @@ static int sdcard_load_cmdline(boot_info_t *boot_info) {
 		f_close(&file);
 		if (read_len <= 0)
 			return -1;
-		boot_info->cmdline = (void *)addr;
-		char *cmdline_end  = boot_info->cmdline + strlen(boot_info->cmdline) - 1;
+		boot_info->cmdline			 = (void *)addr;
+		boot_info->cmdline[read_len] = '\0';
+
+		char *cmdline_end = boot_info->cmdline + strlen(boot_info->cmdline) - 1;
 		while (cmdline_end >= boot_info->cmdline) {
 			if (*cmdline_end != ' ' && *cmdline_end != '\r' && *cmdline_end != '\n')
 				break;
