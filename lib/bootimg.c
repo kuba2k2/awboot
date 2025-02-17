@@ -59,11 +59,11 @@ int boot_img_load(boot_img_read_func func, void *param, boot_info_t *boot_info) 
 	info("BOOTIMG: load successful\r\n");
 
 	// write outputs
-	if (hdr.kernel_size)
+	if (kernel_pages)
 		boot_info->kernel_addr = hdr.kernel_addr;
-	if (hdr.ramdisk_size)
+	if (ramdisk_pages)
 		boot_info->ramdisk_addr = hdr.ramdisk_addr;
-	if (hdr.second_size)
+	if (second_pages)
 		boot_info->dtb_addr = hdr.second_addr;
 	boot_info->kernel_size	= hdr.kernel_size;
 	boot_info->ramdisk_size = hdr.ramdisk_size;
