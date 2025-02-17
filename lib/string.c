@@ -38,6 +38,14 @@ unsigned long strlen(const char *str) {
 	return i - 1;
 }
 
+unsigned long strnlen(const char *str, unsigned long cnt) {
+	long i = 0;
+	for (i = 0; i < cnt; ++i)
+		if (str[i] == '\0')
+			break;
+	return i;
+}
+
 char *strcpy(char *dst, const char *src) {
 	char *bak = dst;
 
@@ -97,6 +105,15 @@ char *strchr(const char *s, int c) {
 			return NULL;
 
 	return (char *)s;
+}
+
+char *strrchr(const char *s, int c) {
+	char *rtnval = 0;
+	do {
+		if (*s == c)
+			rtnval = (char *)s;
+	} while (*s++);
+	return (rtnval);
 }
 
 /* NOTE: This is the simple-minded O(len(s1) * len(s2)) worst-case approach. */
