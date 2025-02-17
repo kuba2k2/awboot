@@ -62,53 +62,59 @@ void console_init(sunxi_usart_t *usart) {
 void console_handler(uint32_t timeout) {
 	char ch;
 	uint32_t tmo = get_sys_ticks();
+	bool rx_cr	 = false;
 
 	while (1) {
 		while (sunxi_usart_data_in_receive_buffer(console.usart) != 0) {
 			ch		= sunxi_usart_getbyte(console.usart);
 			timeout = CONSOLE_NO_TIMEOUT;
-			{
-				switch (ch) {
-					case ASCII_CR:
-						break;
-					case ASCII_LF:
-						message("\r\n");
-						*console.cmd_ptr = '\0';
-						if ((console.cmd_ptr - console.cmd) >= 1) {
-							cmd_parse(console.cmd);
-						} else {
-							cmd_menu();
-						}
-						console.cmd_ptr = console.cmd;
-						break;
 
-					case ASCII_CTRL_C:
-						message("\r\n");
-						console.cmd_ptr = console.cmd;
-						message("Aborted\r\n");
+			if (ch == '\r')
+				rx_cr = true;
+			else if (ch == '\n' && rx_cr)
+				continue;
+			else if (ch != '\n')
+				rx_cr = false;
 
+			switch (ch) {
+				case ASCII_CR:
+				case ASCII_LF:
+					message("\r\n");
+					*console.cmd_ptr = '\0';
+					if ((console.cmd_ptr - console.cmd) >= 1) {
+						cmd_parse(console.cmd);
+					} else {
 						cmd_menu();
-						break;
+					}
+					console.cmd_ptr = console.cmd;
+					break;
 
-					case ASCII_BKSPACE:
-					case ASCII_DEL:
-						if (console.cmd_ptr > console.cmd) {
-							message("\b \b");
-							console.cmd_ptr--;
-						}
-						break;
+				case ASCII_CTRL_C:
+					message("\r\n");
+					console.cmd_ptr = console.cmd;
+					message("Aborted\r\n");
 
-					default:
-						message("%c", ch);
-						*console.cmd_ptr++ = ch;
-						if ((console.cmd_ptr - console.cmd) >= CONSOLE_BUFFER_SIZE) {
-							*console.cmd_ptr = '\0';
+					cmd_menu();
+					break;
 
-							cmd_parse(console.cmd);
-							console.cmd_ptr = console.cmd;
-						}
-						break;
-				}
+				case ASCII_BKSPACE:
+				case ASCII_DEL:
+					if (console.cmd_ptr > console.cmd) {
+						message("\b \b");
+						console.cmd_ptr--;
+					}
+					break;
+
+				default:
+					message("%c", ch);
+					*console.cmd_ptr++ = ch;
+					if ((console.cmd_ptr - console.cmd) >= CONSOLE_BUFFER_SIZE) {
+						*console.cmd_ptr = '\0';
+
+						cmd_parse(console.cmd);
+						console.cmd_ptr = console.cmd;
+					}
+					break;
 			}
 		}
 

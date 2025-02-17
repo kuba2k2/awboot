@@ -78,8 +78,10 @@ void sunxi_usart_putc(void *arg, char c) {
 void sunxi_uart_irq_handler(void *arg) {
 	sunxi_usart_t *usart = (sunxi_usart_t *)arg;
 
-	uint32_t val = read32(usart->base);
-	ringbuffer_put(&usart->ringbuf, (uint8_t)val);
+	while ((read32(usart->base + 0x14) & (0x1 << 0))) {
+		uint32_t val = read32(usart->base);
+		ringbuffer_put(&usart->ringbuf, (uint8_t)val);
+	}
 }
 
 uint16_t sunxi_usart_data_in_receive_buffer(sunxi_usart_t *usart) {
